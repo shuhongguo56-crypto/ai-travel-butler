@@ -436,7 +436,7 @@
   </main>
 
   <script>
-    const STORAGE_KEY = "ai-travel-butler-trip-v4";
+    const STORAGE_KEY = "ai-travel-butler-trip-v5";
     const clone = value => JSON.parse(JSON.stringify(value));
     const routeSlots = [
       [90, 190], [235, 190], [380, 190], [525, 190], [670, 190], [815, 190], [960, 190],
@@ -446,8 +446,8 @@
       name: "日本 2026",
       budget: { fixed: 8228.01, food: 2100, transit: 1600, total: 11928.01 },
       bases: [
-        { city: "东京", name: "KOKO Hotel Premier Nihonbashi Hamacho", date: "7/7-7/10", cost: 2000, note: "滨町站附近，东京段省力基地" },
-        { city: "大阪", name: "川House 难波南-花园町", date: "7/10-7/13", cost: 787.01, note: "花园町站附近，大阪段省钱基地" }
+        { city: "东京", name: "KOKO Hotel Premier Nihonbashi Hamacho", date: "7/7-7/10", cost: 2000, note: "2 Chome-30-4 Nihonbashihamacho；滨町站附近" },
+        { city: "大阪", name: "川House 难波南-花园町", date: "7/10-7/13", cost: 787.01, note: "1-10-4 Hanazonocho, Nishinari-ku, Osaka；花园町站附近" }
       ],
       highlights: [
         ["7/8", "teamLab + 银座/日本桥", "第一整天轻体验，不把体力打爆", "已购"],
@@ -496,18 +496,18 @@
         ["7/8", "teamLab→银座/日本桥", "东京第一整天轻体验，地铁优先", "交通80，餐300"],
         ["7/9", "浅草→涩谷夜景", "上午浅草，晚上涩谷夜景", "交通80，餐300"],
         ["7/10", "东京→大阪", "东京站新干线到新大阪，再到花园町", "交通800，餐300"],
-        ["7/11", "USJ", "当天只做USJ，降低疲劳", "交通70，餐300"],
+        ["7/11", "USJ", "当天只做USJ，降低疲劳", "JR往返约70，餐300"],
         ["7/12", "难波/心斋桥/道顿堀", "大阪自由收尾，购物另算", "交通50，餐300"],
         ["7/13", "大阪→香港→深圳", "南海急行去机场，香港转船回蛇口", "交通90，餐300"]
       ],
       rides: [
-        ["羽田T2→东京酒店", "抵达22:20，过22点有夜间溢价；太累/下雨/行李重再打", "Uber Hamacho↔HND均价约¥10,204，夜间按上浮留预算", "¥10,000-12,500", "约420-525元", "默认地铁；打车是第一晚疲劳保险", "https://www.uber.com/global/en/r/routes/hamacho-chuo-tokyo-jp-to-hnd/"],
-        ["东京酒店→东京站", "7/10拖行李去新干线，短程最适合省力", "Rome2rio Hamacho Hotel→Tokyo Station taxi ¥2,000-2,500", "¥2,000-2,500", "约84-105元", "行李多就打，最值的一段", "https://www.rome2rio.com/s/Hamacho-Hotel-Tokyo/T%C5%8Dky%C5%8D-Station"],
-        ["teamLab→银座", "雨天或腿累时用，减少换乘和步行", "Rome2rio teamLab→Ginza taxi ¥2,300-2,800", "¥2,300-2,800", "约97-118元", "短程体验后可用，别全天靠车", "https://www.rome2rio.com/s/teamLab-Planets/Ginza"],
-        ["浅草→涩谷夜景", "跨城很贵，只在暴雨/错过预约/体力崩时用", "Uber Asakusa→Shibuya均价约¥7,981；Rome2rio约¥6,500-8,000", "¥6,500-8,000", "约273-336元", "默认地铁；这段打车性价比低", "https://www.uber.com/global/en/r/routes/asakusa-tobu-taito-tokyo-jp-to-shibuya-tokyo-jp/"],
-        ["新大阪→大阪酒店", "到大阪带行李，想省力可从新大阪直接打", "Rome2rio Hanazonochō↔Shin-Osaka taxi ¥4,600-5,500", "¥4,600-5,500", "约193-231元", "默认Metro；下雨/热到崩再打", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-Station/Shin-%C5%8Csaka-Station"],
-        ["大阪酒店→USJ", "USJ开园赶时间可打，回程看体力", "Rome2rio Hanazonochō→USJ taxi ¥4,100-4,900", "¥4,100-4,900", "约172-206元", "早上赶开园才值得", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-eki/Universal-Studios-Japan"],
-        ["大阪酒店→关西机场", "返程兜底，不建议默认打车", "Uber Osaka→KIX均价约¥23,010；NAVITIME大阪站→KIX约¥18,700", "¥18,000-23,000", "约756-966元", "默认南海急行；只在误点/暴雨/行李崩溃时用", "https://www.uber.com/global/en/r/routes/osaka-osaka-jp-to-kix/"]
+        ["羽田T2→东京酒店（单程）", "抵达22:20，过22点有夜间溢价；太累/下雨/行李重再打", "Uber Hamacho↔HND均价约¥10,204，夜间按上浮留预算", "¥10,000-12,500", "约420-525元", "默认地铁；打车是第一晚疲劳保险", "https://www.uber.com/global/en/r/routes/hamacho-chuo-tokyo-jp-to-hnd/"],
+        ["东京酒店→东京站（单程）", "7/10拖行李去新干线，短程最适合省力", "Rome2rio Hamacho Hotel→Tokyo Station taxi ¥2,000-2,500", "¥2,000-2,500", "约84-105元", "行李多就打，最值的一段", "https://www.rome2rio.com/s/Hamacho-Hotel-Tokyo/T%C5%8Dky%C5%8D-Station"],
+        ["teamLab→银座（单程）", "雨天或腿累时用，减少换乘和步行", "Rome2rio teamLab→Ginza taxi ¥2,300-2,800", "¥2,300-2,800", "约97-118元", "短程体验后可用，别全天靠车", "https://www.rome2rio.com/s/teamLab-Planets/Ginza"],
+        ["浅草→涩谷夜景（单程）", "跨城很贵，只在暴雨/错过预约/体力崩时用", "Uber Asakusa→Shibuya均价约¥7,981；Rome2rio约¥6,500-8,000", "¥6,500-8,000", "约273-336元", "默认地铁；这段打车性价比低", "https://www.uber.com/global/en/r/routes/asakusa-tobu-taito-tokyo-jp-to-shibuya-tokyo-jp/"],
+        ["新大阪→大阪酒店（单程）", "到大阪带行李，想省力可从新大阪直接打", "Rome2rio Hanazonochō↔Shin-Osaka taxi ¥4,600-5,500", "¥4,600-5,500", "约193-231元", "默认Metro；下雨/热到崩再打", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-Station/Shin-%C5%8Csaka-Station"],
+        ["大阪酒店⇄USJ（往返）", "按你酒店定位：1-10-4 Hanazonocho；早上去USJ，晚上回酒店，费用已含来回", "Rome2rio Hanazonochō→USJ taxi ¥4,100-4,900/单程；这里按往返×2", "¥8,200-9,800", "约344-412元", "只有赶开园/回程累崩才打；默认JR往返", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-eki/Universal-Studios-Japan"],
+        ["大阪酒店→关西机场（单程）", "返程兜底，不建议默认打车", "Uber Osaka→KIX均价约¥23,010；NAVITIME大阪站→KIX约¥18,700", "¥18,000-23,000", "约756-966元", "默认南海急行；只在误点/暴雨/行李崩溃时用", "https://www.uber.com/global/en/r/routes/osaka-osaka-jp-to-kix/"]
       ],
       sources: [
         ["机票", "去程NH966、返程HB341、香港船票来自你的携程截图；ANA官方航班状态需起飞前2天复核。", "已出票", "https://www.ana.co.jp/fs/int/en/"],
