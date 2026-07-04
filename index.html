@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>AI Travel Butler</title>
+  <link rel="icon" href="data:," />
   <style>
     :root {
       --bg: oklch(0.965 0.008 245);
@@ -71,6 +72,8 @@
       gap: 14px;
       align-items: start;
     }
+    .route-grid { grid-template-columns: 1fr; }
+    .route-grid .stack { grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); }
     .panel {
       border: 1px solid var(--line);
       border-radius: 10px;
@@ -108,6 +111,7 @@
       position: relative;
       width: 850px;
       height: 520px;
+      margin: 0 auto;
     }
     .spine svg { position: absolute; inset: 0; width: 100%; height: 100%; }
     .spine path {
@@ -187,6 +191,18 @@
     .prompt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 14px; }
     .prompt { border: 1px solid var(--line); border-radius: 8px; padding: 11px; background: var(--surface); }
     .prompt h3 { margin: 0 0 7px; font-size: 15px; }
+    .workbench { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 14px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; }
+    .field label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 12px; }
+    input {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: var(--surface);
+    }
     textarea {
       width: 100%;
       min-height: 112px;
@@ -199,6 +215,11 @@
       font-size: 12px;
       line-height: 1.45;
     }
+    .json-box { min-height: 380px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    .workflow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px; }
+    .step { border: 1px solid var(--line); border-radius: 8px; padding: 11px; background: var(--surface); font-size: 13px; line-height: 1.45; }
+    .step b { display: block; margin-bottom: 5px; font-size: 14px; }
+    .status { min-height: 22px; padding: 0 14px 14px; color: var(--muted); font-size: 13px; }
     .source { padding: 14px; color: var(--muted); font-size: 13px; line-height: 1.55; }
     .hidden { display: none; }
     @media (max-width: 860px) {
@@ -208,7 +229,7 @@
       .budget { grid-template-columns: 1fr 1fr; }
       .metric:nth-child(2) { border-right: 0; }
       .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
-      .bases, .map-grid, .prompt-grid { grid-template-columns: 1fr; }
+      .bases, .map-grid, .prompt-grid, .workbench, .workflow, .form-grid, .route-grid .stack { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -227,6 +248,7 @@
 
     <nav class="tabs">
       <button class="tab active" data-view="route">脉络</button>
+      <button class="tab" data-view="build">建档</button>
       <button class="tab" data-view="maps">交通证据</button>
       <button class="tab" data-view="agent">AI管家</button>
       <button class="tab" data-view="research">GitHub参考</button>
@@ -234,7 +256,7 @@
 
     <section id="route" class="view">
       <div class="budget" id="budget"></div>
-      <div class="grid" style="margin-top:14px">
+      <div class="grid route-grid" style="margin-top:14px">
         <section class="panel">
           <div class="panel-head">
             <div><h2>主行程脉络</h2><div class="hint">酒店不进主线；第二排从右向左，线不断</div></div>
@@ -253,6 +275,39 @@
           </section>
         </aside>
       </div>
+    </section>
+
+    <section id="build" class="view hidden">
+      <div class="workbench">
+        <section class="panel">
+          <div class="panel-head"><div><h2>新旅行建档</h2><div class="hint">填少量事实，生成低token建档提示词</div></div><button id="make-brief">生成提示词</button></div>
+          <div class="form-grid">
+            <div class="field"><label>目的地</label><input id="f-dest" value="日本 东京/大阪"></div>
+            <div class="field"><label>日期</label><input id="f-date" value="2026/7/7-2026/7/13"></div>
+            <div class="field"><label>预算</label><input id="f-budget" value="约1.2万元，不含购物"></div>
+            <div class="field"><label>体力偏好</label><input id="f-style" value="省钱、省心、省力，不赶时间坐地铁"></div>
+            <div class="field"><label>已定事项</label><input id="f-fixed" value="机票、酒店、签证、teamLab、涩谷夜景、USJ"></div>
+            <div class="field"><label>输出格式</label><input id="f-output" value="Trip JSON + 主线节点 + 预算旁注"></div>
+          </div>
+          <div style="padding:0 14px 14px"><textarea id="brief-output" readonly></textarea></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head">
+            <div><h2>Trip JSON 工作台</h2><div class="hint">改完应用，可保存到本机浏览器</div></div>
+            <div class="actions">
+              <button class="secondary" id="apply-json">应用</button>
+              <button class="secondary" id="save-local">保存本机</button>
+              <button class="secondary" id="reset-trip">恢复默认</button>
+            </div>
+          </div>
+          <div style="padding:14px"><textarea class="json-box" id="json-editor"></textarea></div>
+          <div class="status" id="json-status"></div>
+        </section>
+      </div>
+      <section class="panel" style="margin-top:14px">
+        <div class="panel-head"><div><h2>一站式智能体流程</h2><div class="hint">以后所有跨国旅行都按这个流水线走</div></div></div>
+        <div class="workflow" id="workflow"></div>
+      </section>
     </section>
 
     <section id="maps" class="view hidden">
@@ -278,7 +333,9 @@
   </main>
 
   <script>
-    const trip = {
+    const STORAGE_KEY = "ai-travel-butler-trip-v2";
+    const clone = value => JSON.parse(JSON.stringify(value));
+    const defaultTrip = {
       name: "日本 2026",
       budget: { fixed: 8228.01, food: 2100, transit: 1600, total: 11928.01 },
       bases: [
@@ -307,8 +364,8 @@
         ["浅草→涩谷","交通60-80｜餐300",572,250],
         ["东京→大阪","新干线约736｜餐300",778,285],
         ["USJ往返","50-70｜餐300",604,470],
-        ["市区收尾","30-50｜餐300",425,470],
-        ["去机场","60-90｜餐300",305,470],
+        ["市区收尾","30-50｜餐300",455,470],
+        ["去机场","60-90｜餐300",270,470],
         ["返深","香港船票另计",120,470]
       ],
       days: [
@@ -332,6 +389,14 @@
         ["大阪住宿基地 → USJ","JR到西九条转梦咲线","assets/maps/09-osaka-hotel-usj.png"]
       ]
     };
+    let trip = (() => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : clone(defaultTrip);
+      } catch (error) {
+        return clone(defaultTrip);
+      }
+    })();
     const research = [
       ["TREK","一站式旅行规划应有地图、预算、协作、清单；我们先取地图+预算+路线核心。"],
       ["Wanderlog/TripIt范式","邮箱/预订项适合作为固定事实层；酒店不该混进游玩节点。"],
@@ -346,9 +411,18 @@
       ["画图指令","根据nodes和legs生成蛇形脉络图：第一排左到右，第二排右到左，主线不断，预算在连接线旁。"],
       ["Token规则","以后只接收变更事实，不重复全量行程；输出必须是diff、风险、下一步。"]
     ];
+    const workflow = [
+      ["事实管理员","收集航班、酒店、签证、门票、付款截图。输出 fixedFacts。"],
+      ["路线规划师","只决定主线节点；酒店只做base，不进nodes。"],
+      ["交通核查","逐段给省钱方案、省力兜底、人民币预算和截图证据。"],
+      ["预算师","固定费用、餐饮、交通、购物分离，给控制总额。"],
+      ["可视化师","蛇形主线图、地图证据板、每日执行表。"],
+      ["应急管家","出发前24小时生成检查清单和延误替代方案。"]
+    ];
     const money = n => "¥" + Number(n).toLocaleString("zh-CN");
     function renderBudget() {
       const b = trip.budget;
+      b.total = Number(b.fixed || 0) + Number(b.food || 0) + Number(b.transit || 0);
       document.querySelector("#budget").innerHTML = [
         ["固定已定", b.fixed], ["餐饮", b.food], ["日本交通", b.transit], ["控制总额", b.total]
       ].map(([k,v]) => `<div class="metric"><span>${k}</span><strong>${money(v)}</strong></div>`).join("");
@@ -374,6 +448,38 @@
     function renderResearch() {
       document.querySelector("#research-list").innerHTML = research.map(r => `<div class="row"><b>${r[0]}</b><div><span>${r[1]}</span></div><strong>采纳</strong></div>`).join("");
     }
+    function renderWorkflow() {
+      document.querySelector("#workflow").innerHTML = workflow.map((w, i) => `<div class="step"><b>${i + 1}. ${w[0]}</b>${w[1]}</div>`).join("");
+    }
+    function renderEditor() {
+      document.querySelector("#json-editor").value = JSON.stringify(trip, null, 2);
+    }
+    function renderAll() {
+      renderBudget(); renderSpine(); renderBases(); renderDays(); renderMaps(); renderPrompts(); renderResearch(); renderWorkflow(); renderEditor();
+    }
+    function setStatus(text) {
+      document.querySelector("#json-status").textContent = text;
+      setTimeout(() => document.querySelector("#json-status").textContent = "", 2200);
+    }
+    function makeBrief() {
+      const data = {
+        destination: document.querySelector("#f-dest").value,
+        dates: document.querySelector("#f-date").value,
+        budget: document.querySelector("#f-budget").value,
+        style: document.querySelector("#f-style").value,
+        fixed: document.querySelector("#f-fixed").value,
+        output: document.querySelector("#f-output").value
+      };
+      document.querySelector("#brief-output").value =
+`你是我的私人旅行策划师。基于以下事实，生成最省钱省心省力的 Trip JSON。
+目的地: ${data.destination}
+日期: ${data.dates}
+预算: ${data.budget}
+偏好: ${data.style}
+已定: ${data.fixed}
+输出: ${data.output}
+规则: 酒店只做base不进nodes；每段交通给省钱方案/省力兜底/人民币预算；不要写长文。`;
+    }
     function asMarkdown() {
       return `# ${trip.name}\n\n## 主线\n${trip.nodes.map(n=>`${n[0]} ${n[1]}：${n[2]}`).join("\n")}\n\n## 预算\n固定${trip.budget.fixed}，餐饮${trip.budget.food}，交通${trip.budget.transit}，合计${trip.budget.total}`;
     }
@@ -392,7 +498,29 @@
     });
     document.querySelector("#copy-md").onclick = () => navigator.clipboard.writeText(asMarkdown());
     document.querySelector("#copy-json").onclick = () => navigator.clipboard.writeText(JSON.stringify(trip, null, 2));
-    renderBudget(); renderSpine(); renderBases(); renderDays(); renderMaps(); renderPrompts(); renderResearch();
+    document.querySelector("#make-brief").onclick = makeBrief;
+    document.querySelector("#apply-json").onclick = () => {
+      try {
+        trip = JSON.parse(document.querySelector("#json-editor").value);
+        renderAll();
+        setStatus("已应用到当前页面");
+      } catch (error) {
+        setStatus("JSON格式错误: " + error.message);
+      }
+    };
+    document.querySelector("#save-local").onclick = () => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(trip));
+      setStatus("已保存到本机浏览器");
+    };
+    document.querySelector("#reset-trip").onclick = () => {
+      trip = clone(defaultTrip);
+      localStorage.removeItem(STORAGE_KEY);
+      renderAll();
+      setStatus("已恢复默认日本旅行包");
+    };
+    renderAll();
+    makeBrief();
+    window.addEventListener("hashchange", () => showView(location.hash.slice(1)));
     if (location.hash) showView(location.hash.slice(1));
   </script>
 </body>
