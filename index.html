@@ -108,7 +108,7 @@
       gap: 14px;
       margin-top: 14px;
     }
-    .highlight-list, .weather-grid, .source-grid, .base-grid {
+    .highlight-list, .weather-grid, .source-grid, .base-grid, .ride-grid, .check-grid {
       display: grid;
       gap: 10px;
       padding: 14px;
@@ -123,8 +123,8 @@
       font-size: 13px;
     }
     .highlight:last-child { border-bottom: 0; padding-bottom: 0; }
-    .highlight b, .weather-card b, .source-card b { font-size: 14px; }
-    .highlight span, .weather-card span, .source-card span, .day-note { color: var(--muted); }
+    .highlight b, .weather-card b, .source-card b, .ride-card b, .check-card b { font-size: 14px; }
+    .highlight span, .weather-card span, .source-card span, .ride-card span, .check-card span, .day-note { color: var(--muted); }
     .pill {
       display: inline-flex;
       align-items: center;
@@ -141,7 +141,7 @@
     .pill.good { border-color: color-mix(in oklch, var(--green) 35%, var(--line)); color: var(--green); }
     .pill.warn { border-color: color-mix(in oklch, var(--amber) 45%, var(--line)); color: var(--amber); }
     .weather-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .weather-card, .source-card, .base-card, .step {
+    .weather-card, .source-card, .base-card, .ride-card, .check-card, .step {
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 11px;
@@ -150,6 +150,9 @@
       line-height: 1.45;
     }
     .weather-card strong { display: block; margin: 5px 0 4px; font-size: 18px; }
+    .ride-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .ride-card strong { display: block; margin: 7px 0 4px; font-size: 20px; }
+    .fare-line { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .spine-wrap {
       margin-top: 14px;
       overflow-x: auto;
@@ -239,6 +242,7 @@
     .row:last-child { border-bottom: 0; padding-bottom: 0; }
     .row b { font-size: 14px; }
     .source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .check-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .map-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -292,7 +296,7 @@
       .budget { grid-template-columns: 1fr 1fr; }
       .metric:nth-child(2) { border-right: 0; }
       .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
-      .weather-grid, .source-grid, .base-grid, .map-grid, .prompt-grid, .workflow, .form-grid, .tool-grid { grid-template-columns: 1fr; }
+      .weather-grid, .source-grid, .base-grid, .ride-grid, .check-grid, .map-grid, .prompt-grid, .workflow, .form-grid, .tool-grid { grid-template-columns: 1fr; }
       .spine { width: 1040px; }
     }
   </style>
@@ -313,6 +317,7 @@
     <nav class="tabs">
       <button class="tab active" data-view="route">总览</button>
       <button class="tab" data-view="build">调整</button>
+      <button class="tab" data-view="checklist">清单</button>
       <button class="tab" data-view="maps">交通证据</button>
       <button class="tab" data-view="agent">AI管家</button>
       <button class="tab" data-view="research">来源逻辑</button>
@@ -339,6 +344,11 @@
         </div>
         <div class="spine-wrap"><div class="spine" id="spine"></div></div>
         <div class="base-grid" id="bases"></div>
+      </section>
+
+      <section class="panel" style="margin-top:14px">
+        <div class="panel-head"><div><h2>打车兜底预算</h2><div class="hint">按Uber/NAVITIME/Rome2rio公开估算；人民币按 1 JPY≈0.042 CNY 估算</div></div></div>
+        <div class="ride-grid" id="rides"></div>
       </section>
 
       <div class="bottom-grid">
@@ -396,6 +406,13 @@
       </section>
     </section>
 
+    <section id="checklist" class="view hidden">
+      <section class="panel">
+        <div class="panel-head"><div><h2>出发执行清单</h2><div class="hint">车票怎么买、到地方怎么玩、买什么、钱怎么花，全部压缩成行动卡</div></div></div>
+        <div class="check-grid" id="checklist-grid"></div>
+      </section>
+    </section>
+
     <section id="maps" class="view hidden">
       <section class="panel">
         <div class="panel-head"><div><h2>关键两点交通证据</h2><div class="hint">Google Maps截图作位置感参考；当天时间以实时查询为准</div></div></div>
@@ -419,7 +436,7 @@
   </main>
 
   <script>
-    const STORAGE_KEY = "ai-travel-butler-trip-v3";
+    const STORAGE_KEY = "ai-travel-butler-trip-v4";
     const clone = value => JSON.parse(JSON.stringify(value));
     const routeSlots = [
       [90, 190], [235, 190], [380, 190], [525, 190], [670, 190], [815, 190], [960, 190],
@@ -483,13 +500,55 @@
         ["7/12", "难波/心斋桥/道顿堀", "大阪自由收尾，购物另算", "交通50，餐300"],
         ["7/13", "大阪→香港→深圳", "南海急行去机场，香港转船回蛇口", "交通90，餐300"]
       ],
+      rides: [
+        ["羽田T2→东京酒店", "抵达22:20，过22点有夜间溢价；太累/下雨/行李重再打", "Uber Hamacho↔HND均价约¥10,204，夜间按上浮留预算", "¥10,000-12,500", "约420-525元", "默认地铁；打车是第一晚疲劳保险", "https://www.uber.com/global/en/r/routes/hamacho-chuo-tokyo-jp-to-hnd/"],
+        ["东京酒店→东京站", "7/10拖行李去新干线，短程最适合省力", "Rome2rio Hamacho Hotel→Tokyo Station taxi ¥2,000-2,500", "¥2,000-2,500", "约84-105元", "行李多就打，最值的一段", "https://www.rome2rio.com/s/Hamacho-Hotel-Tokyo/T%C5%8Dky%C5%8D-Station"],
+        ["teamLab→银座", "雨天或腿累时用，减少换乘和步行", "Rome2rio teamLab→Ginza taxi ¥2,300-2,800", "¥2,300-2,800", "约97-118元", "短程体验后可用，别全天靠车", "https://www.rome2rio.com/s/teamLab-Planets/Ginza"],
+        ["浅草→涩谷夜景", "跨城很贵，只在暴雨/错过预约/体力崩时用", "Uber Asakusa→Shibuya均价约¥7,981；Rome2rio约¥6,500-8,000", "¥6,500-8,000", "约273-336元", "默认地铁；这段打车性价比低", "https://www.uber.com/global/en/r/routes/asakusa-tobu-taito-tokyo-jp-to-shibuya-tokyo-jp/"],
+        ["新大阪→大阪酒店", "到大阪带行李，想省力可从新大阪直接打", "Rome2rio Hanazonochō↔Shin-Osaka taxi ¥4,600-5,500", "¥4,600-5,500", "约193-231元", "默认Metro；下雨/热到崩再打", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-Station/Shin-%C5%8Csaka-Station"],
+        ["大阪酒店→USJ", "USJ开园赶时间可打，回程看体力", "Rome2rio Hanazonochō→USJ taxi ¥4,100-4,900", "¥4,100-4,900", "约172-206元", "早上赶开园才值得", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-eki/Universal-Studios-Japan"],
+        ["大阪酒店→关西机场", "返程兜底，不建议默认打车", "Uber Osaka→KIX均价约¥23,010；NAVITIME大阪站→KIX约¥18,700", "¥18,000-23,000", "约756-966元", "默认南海急行；只在误点/暴雨/行李崩溃时用", "https://www.uber.com/global/en/r/routes/osaka-osaka-jp-to-kix/"]
+      ],
       sources: [
         ["机票", "去程NH966、返程HB341、香港船票来自你的携程截图；ANA官方航班状态需起飞前2天复核。", "已出票", "https://www.ana.co.jp/fs/int/en/"],
         ["酒店", "东京KOKO 2000元；大阪川House 787.01元；均来自你的订单截图。", "已付款", ""],
         ["门票", "teamLab 108元、涩谷夜景200元、USJ 320元来自你已购信息。", "已购买", ""],
-        ["交通", "路线依据Google Maps截图和日本地铁/新干线常规方案；当天用地图复核站台与耗时。", "需复核", ""],
+        ["交通", "路线依据Google Maps截图和日本地铁/新干线常规方案；打车用Uber/NAVITIME/Rome2rio估算，当天以App报价为准。", "需复核", "https://www.uber.com/global/en/price-estimate/"],
+        ["免税购物", "日本观光厅规则：同店同日税前满5000日元通常可办免税；消耗品不要在日本拆封。", "可用", "https://www.mlit.go.jp/kankocho/tax-free/page01_000113.html"],
         ["日本天气", "东京/大阪预报按2026-07-04查询结果写入；官方可交叉看JMA。", "临近复核", "https://www.data.jma.go.jp/multi/yoho/yoho_detail.html?code=130010&lang=en"],
         ["深港天气", "香港/深圳转场受雨和热影响；香港预警看香港天文台。", "临近复核", "https://www.hko.gov.hk/en/index.html"]
+      ],
+      checklist: [
+        ["出发前准备", [
+          ["证件", "护照、签证页、机票/酒店/门票QR离线保存；微信收藏一份，手机相册一份。"],
+          ["支付", "Visa/Master/银联卡 + 3-5万日元现金；现金优先给小店、交通补票、储物柜。"],
+          ["通信", "开通漫游或eSIM；Google Maps、Uber、GO/S.Ride、SmartEX、USJ App提前登录。"],
+          ["行李", "雨伞、防晒、充电宝、转接头、轻便鞋；USJ当天少背包。"]
+        ]],
+        ["车票怎么买", [
+          ["东京地铁/JR", "不买复杂通票；手机Suica/PASMO或单程票即可，按当天路线走。"],
+          ["新干线", "优先SmartEX买东京→新大阪指定席；银行卡失败就东京站JR窗口/机器买。"],
+          ["大阪市内", "Metro/JR单程为主；USJ走JR梦咲线到Universal-City。"],
+          ["关西机场", "从花园町到天下茶屋/难波接南海；赶时间买Rapi:t，省钱买Airport Express。"]
+        ]],
+        ["到地方怎么玩", [
+          ["teamLab", "提前15-20分钟到；穿方便卷裤脚的衣服，现场存包。结束后轻逛银座/日本桥。"],
+          ["浅草", "上午去，少晒；雷门、仲见世、浅草寺一线即可，不要贪多。"],
+          ["涩谷夜景", "预约前60-90分钟到涩谷，先吃饭/寄存；雨大就重点拍室内。"],
+          ["USJ", "进园立刻看App抽任天堂区域整理券；当天只做USJ，不安排第二主线。"]
+        ]],
+        ["去哪里买什么", [
+          ["东京", "银座/日本桥适合买轻奢小物、文具、伴手礼；别买太重。"],
+          ["浅草", "买小礼物、御守、和风零食；控制体积。"],
+          ["大阪", "难波/心斋桥/道顿堀集中买药妆、零食、动漫联名；最后一天前买完。"],
+          ["机场", "只补漏买白色恋人/薯条三兄弟类伴手礼；价格不一定最优但省心。"]
+        ]],
+        ["钱怎么花最划算", [
+          ["交通", "默认地铁/JR；只把打车留给第一晚、带行李、新干线转场、USJ赶开园、机场误点。"],
+          ["餐饮", "每天300元够用：便利店早餐/午餐简餐/晚餐吃一顿好的；USJ餐饮单独心理预留。"],
+          ["购物", "不设上限，但按“同店同日税前5000日元”凑免税；消耗品免税袋别拆。"],
+          ["预算", "固定费用不再纠结；现场只盯三件事：交通是否超、餐饮是否超、购物是否值得搬。"]
+        ]]
       ],
       maps: [
         ["羽田机场 → 东京住宿基地", "京急/都营浅草线；深夜太累打车兜底", "assets/maps/01-hnd-koko.png"],
@@ -512,16 +571,17 @@
       }
     })();
     const research = [
-      ["事实层", "把机票、酒店、门票、签证、天气、交通截图分开存。页面只引用事实，不把猜测当确定。", "核心"],
-      ["决策层", "每个节点只回答三件事：为什么去、怎么去、要花多少钱。两天互换时只交换节点组。", "可复用"],
-      ["展示层", "第一页必须先给爽点、天气、总预算、大脉络图；细节表和来源放在下面。", "爽点"],
-      ["低token层", "以后只给变更事实，例如“交换7/8和7/9”，系统输出JSON diff，不重写全篇。", "省token"]
+      ["TREK", "借鉴它的预算、packing lists、地图、协作结构；本站保留轻量静态数据，不上复杂后端。", "结构"],
+      ["MakeYourTrip", "借鉴它的day-by-day费用、logistics、place-level todos；本站压缩成行动清单卡。", "清单"],
+      ["OpenTripPlanner", "借鉴多模式交通思路：地铁/JR默认，ride-hailing只做兜底，不把打车当主路线。", "交通"],
+      ["低token层", "以后只给变更事实，例如“7/9下雨，交换室内外行程”，系统输出JSON diff，不重写全篇。", "省token"]
     ];
     const prompts = [
       ["新旅行建档", "你是私人旅行策划师。只问缺失字段：国家/城市、日期、航班、酒店、签证、预算、体力偏好。输出Trip JSON，不写长文。"],
       ["路线脉络更新", "基于Trip JSON，只修改nodes/legs/days/highlights。酒店仅做base，不进nodes。输出JSON diff + 3条摘要。"],
-      ["交通核查", "逐段核查legs。每段给省钱方案/省力兜底/预算人民币/信息来源。不要重写景点介绍。"],
+      ["打车兜底", "逐段核查rides。每段给Uber/当地打车App或公开估价来源、JPY、CNY、触发条件。不要把打车设为默认。"],
       ["天气复核", "按日期和城市复核weather。输出：日期/城市/温度/雨雷/对行程影响/是否建议交换日期。"],
+      ["执行清单", "只更新checklist：出发前、车票、玩法、购物、花钱策略。每条不超过35字。"],
       ["画图指令", "根据nodes和legs生成蛇形脉络图：日期标签必须清晰，节点不重叠，预算写在连接线旁，酒店只做base。"],
       ["Token规则", "以后只接收变更事实，不重复全量行程；输出必须是diff、影响、下一步。"]
     ];
@@ -581,6 +641,20 @@
         <div class="row"><b>${d[0]}</b><div><b>${d[1]}</b><br><span class="day-note">${d[2]}</span></div><strong>${d[3]}</strong></div>
       `).join("");
     }
+    function renderRides() {
+      const rides = trip.rides || defaultTrip.rides;
+      document.querySelector("#rides").innerHTML = rides.map(r => `
+        <article class="ride-card">
+          <b>${r[0]}</b><br>
+          <span>${r[1]}</span>
+          <strong>${r[4]}</strong>
+          <div>${r[3]}</div>
+          <div class="fare-line"><span class="pill warn">打车兜底</span><span class="pill">${r[5]}</span></div>
+          <span>${r[2]}</span><br>
+          <a href="${r[6]}" target="_blank" rel="noreferrer">打开估价来源</a>
+        </article>
+      `).join("");
+    }
     function renderSources() {
       document.querySelector("#sources").innerHTML = trip.sources.map(s => `
         <article class="source-card">
@@ -599,6 +673,15 @@
     function renderResearch() {
       document.querySelector("#research-list").innerHTML = research.map(r => `<div class="row"><b>${r[0]}</b><div><span>${r[1]}</span></div><strong>${r[2]}</strong></div>`).join("");
     }
+    function renderChecklist() {
+      const sections = trip.checklist || defaultTrip.checklist;
+      document.querySelector("#checklist-grid").innerHTML = sections.map(section => `
+        <article class="check-card">
+          <h3>${section[0]}</h3>
+          ${section[1].map(item => `<p><b>${item[0]}</b><br><span>${item[1]}</span></p>`).join("")}
+        </article>
+      `).join("");
+    }
     function renderWorkflow() {
       const host = document.querySelector("#workflow");
       if (host) host.innerHTML = workflow.map((w, i) => `<div class="step"><b>${i + 1}. ${w[0]}</b>${w[1]}</div>`).join("");
@@ -616,7 +699,7 @@
       if (trip.days[2]) b.value = trip.days[2][0];
     }
     function renderAll() {
-      renderBudget(); renderHighlights(); renderWeather(); renderSpine(); renderBases(); renderDays(); renderSources(); renderMaps(); renderPrompts(); renderResearch(); renderWorkflow(); renderEditor(); renderSwapControls();
+      renderBudget(); renderHighlights(); renderWeather(); renderSpine(); renderBases(); renderDays(); renderRides(); renderSources(); renderMaps(); renderPrompts(); renderResearch(); renderChecklist(); renderWorkflow(); renderEditor(); renderSwapControls();
     }
     function setStatus(id, text) {
       const el = document.querySelector(id);
@@ -640,7 +723,7 @@
 偏好: ${data.style}
 已定: ${data.fixed}
 输出: ${data.output}
-规则: 酒店只做base不进nodes；每段交通给省钱方案/省力兜底/人民币预算/来源；必须有highlights、weather、sources；不要写长文。`;
+规则: 酒店只做base不进nodes；每段交通给省钱方案/省力兜底/人民币预算/来源；必须有highlights、weather、rides、checklist、sources；不要写长文。`;
     }
     function swapDayContent(dateA, dateB) {
       if (!dateA || !dateB || dateA === dateB) return false;
@@ -672,7 +755,9 @@
       return true;
     }
     function asMarkdown() {
-      return `# ${trip.name}\n\n## 爽点\n${trip.highlights.map(h=>`${h[0]} ${h[1]}：${h[2]}`).join("\n")}\n\n## 主线\n${trip.nodes.map(n=>`${n[0]} ${n[1]}：${n[2]}`).join("\n")}\n\n## 预算\n固定${trip.budget.fixed}，餐饮${trip.budget.food}，交通${trip.budget.transit}，合计${trip.budget.total}`;
+      const rideText = (trip.rides || defaultTrip.rides).map(r=>`${r[0]}：${r[3]} / ${r[4]}，${r[5]}`).join("\n");
+      const checkText = (trip.checklist || defaultTrip.checklist).map(s=>`### ${s[0]}\n${s[1].map(i=>`- ${i[0]}：${i[1]}`).join("\n")}`).join("\n");
+      return `# ${trip.name}\n\n## 爽点\n${trip.highlights.map(h=>`${h[0]} ${h[1]}：${h[2]}`).join("\n")}\n\n## 主线\n${trip.nodes.map(n=>`${n[0]} ${n[1]}：${n[2]}`).join("\n")}\n\n## 打车兜底\n${rideText}\n\n## 清单\n${checkText}\n\n## 预算\n固定${trip.budget.fixed}，餐饮${trip.budget.food}，交通${trip.budget.transit}，合计${trip.budget.total}`;
     }
     function showView(name) {
       const btn = document.querySelector(`.tab[data-view="${name}"]`) || document.querySelector(".tab");
