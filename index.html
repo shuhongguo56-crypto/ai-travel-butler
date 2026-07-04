@@ -245,6 +245,15 @@
     .row b { font-size: 14px; }
     .source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .check-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sheet-wrap { overflow-x: auto; padding: 14px; }
+    .budget-table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 13px; }
+    .budget-table th, .budget-table td { border-bottom: 1px solid var(--line); padding: 8px; text-align: left; vertical-align: middle; }
+    .budget-table th { color: var(--muted); font-weight: 600; background: var(--soft); }
+    .budget-table input, .budget-table select { min-height: 34px; padding: 6px 8px; }
+    .budget-table input[type="checkbox"] { width: 18px; min-height: 18px; }
+    .num-input { width: 100px; }
+    .qty-input { width: 72px; }
+    .rate-box { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .map-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -300,6 +309,47 @@
       .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
       .weather-grid, .source-grid, .base-grid, .ride-grid, .night-grid, .check-grid, .map-grid, .prompt-grid, .workflow, .form-grid, .tool-grid { grid-template-columns: 1fr; }
       .spine { width: 1040px; }
+      .sheet-wrap { overflow: visible; padding: 10px; }
+      .budget-table { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }
+      .budget-table thead { display: none; }
+      .budget-table, .budget-table tbody, .budget-table tr, .budget-table td { display: block; width: 100%; }
+      .budget-table tr {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px;
+        background: var(--surface);
+      }
+      .budget-table td {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr);
+        gap: 8px;
+        align-items: center;
+        border-bottom: 0;
+        padding: 5px 0;
+      }
+      .budget-table td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .budget-table td[data-label="项目"] {
+        order: -2;
+        grid-template-columns: 1fr;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 9px;
+        margin-bottom: 4px;
+      }
+      .budget-table td[data-label="项目"]::before { display: none; }
+      .budget-table td[data-label="项目"] input {
+        font-weight: 700;
+        background: var(--soft);
+      }
+      .budget-table td[data-label="计入"] { order: -1; }
+      .budget-table td[data-label="分类"],
+      .budget-table td[data-label="说明"] { display: none; }
+      .budget-table input, .budget-table select { min-width: 0; }
     }
   </style>
 </head>
@@ -320,6 +370,7 @@
       <button class="tab active" data-view="route">总览</button>
       <button class="tab" data-view="build">调整</button>
       <button class="tab" data-view="checklist">清单</button>
+      <button class="tab" data-view="sheet">预算表</button>
       <button class="tab" data-view="maps">交通证据</button>
       <button class="tab" data-view="agent">AI管家</button>
       <button class="tab" data-view="research">来源逻辑</button>
@@ -420,6 +471,17 @@
       </section>
     </section>
 
+    <section id="sheet" class="view hidden">
+      <section class="panel">
+        <div class="panel-head">
+          <div><h2>联动预算表</h2><div class="hint">像Excel一样：改单价、数量、是否计入，顶部预算和所有预算卡同步刷新</div></div>
+          <div class="rate-box"><span class="pill good" id="sheet-save">自动保存</span><label for="rate-jpy">JPY→CNY</label><input class="num-input" id="rate-jpy" type="number" min="0" step="0.001"></div>
+        </div>
+        <div class="sheet-wrap"><table class="budget-table" id="budget-sheet"></table></div>
+        <div class="source">规则：固定/餐饮/公共交通默认计入；打车兜底默认不计入。你勾选某段打车后，顶部“日本交通”和“控制总额”会立刻变化，并自动保存到当前浏览器。</div>
+      </section>
+    </section>
+
     <section id="maps" class="view hidden">
       <section class="panel">
         <div class="panel-head"><div><h2>关键两点交通证据</h2><div class="hint">Google Maps截图作位置感参考；当天时间以实时查询为准</div></div></div>
@@ -443,7 +505,7 @@
   </main>
 
   <script>
-    const STORAGE_KEY = "ai-travel-butler-trip-v5";
+    const STORAGE_KEY = "ai-travel-butler-trip-v6";
     const clone = value => JSON.parse(JSON.stringify(value));
     const routeSlots = [
       [90, 190], [235, 190], [380, 190], [525, 190], [670, 190], [815, 190], [960, 190],
@@ -451,7 +513,45 @@
     ];
     const defaultTrip = {
       name: "日本 2026",
+      settings: { jpyCny: 0.042 },
       budget: { fixed: 8228.01, food: 2100, transit: 1600, total: 11928.01 },
+      budgetSheet: [
+        { id: "flight-out", group: "固定", name: "去程 NH966 深圳→东京", currency: "CNY", low: 2240, high: 2240, qty: 1, active: true, note: "已出票" },
+        { id: "flight-back", group: "固定", name: "返程 HB341 大阪→香港", currency: "CNY", low: 2323, high: 2323, qty: 1, active: true, note: "已出票" },
+        { id: "visa", group: "固定", name: "日本签证", currency: "CNY", low: 250, high: 250, qty: 1, active: true, note: "已办" },
+        { id: "hotel-tokyo", group: "固定", name: "东京KOKO酒店 3晚", currency: "CNY", low: 2000, high: 2000, qty: 1, active: true, note: "已订" },
+        { id: "hotel-osaka", group: "固定", name: "大阪川House 3晚", currency: "CNY", low: 787.01, high: 787.01, qty: 1, active: true, note: "已订" },
+        { id: "ticket-teamlab", group: "固定", name: "teamLab门票", currency: "CNY", low: 108, high: 108, qty: 1, active: true, note: "已购" },
+        { id: "ticket-shibuya", group: "固定", name: "涩谷夜景门票", currency: "CNY", low: 200, high: 200, qty: 1, active: true, note: "已购" },
+        { id: "ticket-usj", group: "固定", name: "USJ门票", currency: "CNY", low: 320, high: 320, qty: 1, active: true, note: "已购" },
+        { id: "food-0707", group: "餐饮", name: "7/7 餐饮", currency: "CNY", low: 300, high: 300, qty: 1, active: true, note: "每日预算" },
+        { id: "food-0708", group: "餐饮", name: "7/8 餐饮", currency: "CNY", low: 300, high: 300, qty: 1, active: true, note: "每日预算" },
+        { id: "food-0709", group: "餐饮", name: "7/9 餐饮", currency: "CNY", low: 300, high: 300, qty: 1, active: true, note: "每日预算" },
+        { id: "food-0710", group: "餐饮", name: "7/10 餐饮", currency: "CNY", low: 300, high: 300, qty: 1, active: true, note: "每日预算" },
+        { id: "food-0711", group: "餐饮", name: "7/11 餐饮", currency: "CNY", low: 300, high: 300, qty: 1, active: true, note: "每日预算" },
+        { id: "food-0712", group: "餐饮", name: "7/12 餐饮", currency: "CNY", low: 300, high: 300, qty: 1, active: true, note: "每日预算" },
+        { id: "food-0713", group: "餐饮", name: "7/13 餐饮", currency: "CNY", low: 300, high: 300, qty: 1, active: true, note: "每日预算" },
+        { id: "transit-0707", group: "公共交通", name: "7/7 羽田→酒店地铁", currency: "CNY", low: 50, high: 50, qty: 1, active: true, note: "默认方案" },
+        { id: "transit-0708", group: "公共交通", name: "7/8 东京市内", currency: "CNY", low: 80, high: 80, qty: 1, active: true, note: "默认方案" },
+        { id: "transit-0709", group: "公共交通", name: "7/9 东京市内", currency: "CNY", low: 80, high: 80, qty: 1, active: true, note: "默认方案" },
+        { id: "transit-0710", group: "公共交通", name: "7/10 新干线+市内", currency: "CNY", low: 800, high: 800, qty: 1, active: true, note: "默认方案" },
+        { id: "transit-0711", group: "公共交通", name: "7/11 USJ JR往返", currency: "CNY", low: 70, high: 70, qty: 1, active: true, note: "默认方案" },
+        { id: "transit-0712", group: "公共交通", name: "7/12 大阪市内", currency: "CNY", low: 50, high: 50, qty: 1, active: true, note: "默认方案" },
+        { id: "transit-0713", group: "公共交通", name: "7/13 去关西机场", currency: "CNY", low: 90, high: 90, qty: 1, active: true, note: "默认方案" },
+        { id: "transit-buffer", group: "公共交通", name: "交通浮动缓冲", currency: "CNY", low: 380, high: 380, qty: 1, active: true, note: "凑整缓冲" },
+        { id: "taxi-hnd-hotel", group: "打车兜底", name: "7/7 羽田T2→东京酒店", currency: "JPY", low: 10000, high: 12500, qty: 1, active: false, note: "单程" },
+        { id: "taxi-ginza-hotel", group: "打车兜底", name: "7/8 银座/日本桥→东京酒店", currency: "JPY", low: 2100, high: 2600, qty: 1, active: false, note: "单程夜归" },
+        { id: "taxi-shibuya-hotel", group: "打车兜底", name: "7/9 涩谷夜景→东京酒店", currency: "JPY", low: 6000, high: 7800, qty: 1, active: false, note: "单程夜归" },
+        { id: "taxi-namba-hotel-0710", group: "打车兜底", name: "7/10 难波/道顿堀→大阪酒店", currency: "JPY", low: 2000, high: 3000, qty: 1, active: false, note: "单程夜归" },
+        { id: "taxi-usj-hotel", group: "打车兜底", name: "7/11 USJ→大阪酒店", currency: "JPY", low: 4100, high: 4900, qty: 1, active: false, note: "单程夜归" },
+        { id: "taxi-dotonbori-hotel", group: "打车兜底", name: "7/12 心斋桥/道顿堀→大阪酒店", currency: "JPY", low: 2000, high: 3000, qty: 1, active: false, note: "单程夜归" },
+        { id: "taxi-tokyo-station", group: "打车兜底", name: "东京酒店→东京站", currency: "JPY", low: 2000, high: 2500, qty: 1, active: false, note: "单程带行李" },
+        { id: "taxi-teamlab-ginza", group: "打车兜底", name: "teamLab→银座", currency: "JPY", low: 2300, high: 2800, qty: 1, active: false, note: "单程" },
+        { id: "taxi-asakusa-shibuya", group: "打车兜底", name: "浅草→涩谷夜景", currency: "JPY", low: 6500, high: 8000, qty: 1, active: false, note: "单程跨城" },
+        { id: "taxi-shinosaka-hotel", group: "打车兜底", name: "新大阪→大阪酒店", currency: "JPY", low: 4600, high: 5500, qty: 1, active: false, note: "单程带行李" },
+        { id: "taxi-usj-roundtrip", group: "打车兜底", name: "大阪酒店⇄USJ", currency: "JPY", low: 4100, high: 4900, qty: 2, active: false, note: "往返" },
+        { id: "taxi-kix", group: "打车兜底", name: "大阪酒店→关西机场", currency: "JPY", low: 18000, high: 23000, qty: 1, active: false, note: "单程机场" }
+      ],
       bases: [
         { city: "东京", name: "KOKO Hotel Premier Nihonbashi Hamacho", date: "7/7-7/10", cost: 2000, note: "2 Chome-30-4 Nihonbashihamacho；滨町站附近" },
         { city: "大阪", name: "川House 难波南-花园町", date: "7/10-7/13", cost: 787.01, note: "1-10-4 Hanazonocho, Nishinari-ku, Osaka；花园町站附近" }
@@ -499,31 +599,31 @@
         ["返深", "香港船票另计", 275, 530]
       ],
       days: [
-        ["7/7", "深圳→东京", "NH966到羽田；地铁去东京基地，太晚打车兜底", "交通50/450，餐300"],
-        ["7/8", "teamLab→银座/日本桥", "东京第一整天轻体验，地铁优先", "交通80，餐300"],
-        ["7/9", "浅草→涩谷夜景", "上午浅草，晚上涩谷夜景", "交通80，餐300"],
-        ["7/10", "东京→大阪", "东京站新干线到新大阪，再到花园町", "交通800，餐300"],
-        ["7/11", "USJ", "当天只做USJ，降低疲劳", "JR往返约70，餐300"],
-        ["7/12", "难波/心斋桥/道顿堀", "大阪自由收尾，购物另算", "交通50，餐300"],
-        ["7/13", "大阪→香港→深圳", "南海急行去机场，香港转船回蛇口", "交通90，餐300"]
+        ["7/7", "深圳→东京", "NH966到羽田；地铁去东京基地，太晚打车兜底", "transit-0707", "food-0707"],
+        ["7/8", "teamLab→银座/日本桥", "东京第一整天轻体验，地铁优先", "transit-0708", "food-0708"],
+        ["7/9", "浅草→涩谷夜景", "上午浅草，晚上涩谷夜景", "transit-0709", "food-0709"],
+        ["7/10", "东京→大阪", "东京站新干线到新大阪，再到花园町", "transit-0710", "food-0710"],
+        ["7/11", "USJ", "当天只做USJ，降低疲劳", "transit-0711", "food-0711"],
+        ["7/12", "难波/心斋桥/道顿堀", "大阪自由收尾，购物另算", "transit-0712", "food-0712"],
+        ["7/13", "大阪→香港→深圳", "南海急行去机场，香港转船回蛇口", "transit-0713", "food-0713"]
       ],
       rides: [
-        ["羽田T2→东京酒店（单程）", "抵达22:20，过22点有夜间溢价；太累/下雨/行李重再打", "Uber Hamacho↔HND均价约¥10,204，夜间按上浮留预算", "¥10,000-12,500", "约420-525元", "默认地铁；打车是第一晚疲劳保险", "https://www.uber.com/global/en/r/routes/hamacho-chuo-tokyo-jp-to-hnd/"],
-        ["东京酒店→东京站（单程）", "7/10拖行李去新干线，短程最适合省力", "Rome2rio Hamacho Hotel→Tokyo Station taxi ¥2,000-2,500", "¥2,000-2,500", "约84-105元", "行李多就打，最值的一段", "https://www.rome2rio.com/s/Hamacho-Hotel-Tokyo/T%C5%8Dky%C5%8D-Station"],
-        ["teamLab→银座（单程）", "雨天或腿累时用，减少换乘和步行", "Rome2rio teamLab→Ginza taxi ¥2,300-2,800", "¥2,300-2,800", "约97-118元", "短程体验后可用，别全天靠车", "https://www.rome2rio.com/s/teamLab-Planets/Ginza"],
-        ["浅草→涩谷夜景（单程）", "跨城很贵，只在暴雨/错过预约/体力崩时用", "Uber Asakusa→Shibuya均价约¥7,981；Rome2rio约¥6,500-8,000", "¥6,500-8,000", "约273-336元", "默认地铁；这段打车性价比低", "https://www.uber.com/global/en/r/routes/asakusa-tobu-taito-tokyo-jp-to-shibuya-tokyo-jp/"],
-        ["新大阪→大阪酒店（单程）", "到大阪带行李，想省力可从新大阪直接打", "Rome2rio Hanazonochō↔Shin-Osaka taxi ¥4,600-5,500", "¥4,600-5,500", "约193-231元", "默认Metro；下雨/热到崩再打", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-Station/Shin-%C5%8Csaka-Station"],
-        ["大阪酒店⇄USJ（往返）", "按你酒店定位：1-10-4 Hanazonocho；早上去USJ，晚上回酒店，费用已含来回", "Rome2rio Hanazonochō→USJ taxi ¥4,100-4,900/单程；这里按往返×2", "¥8,200-9,800", "约344-412元", "只有赶开园/回程累崩才打；默认JR往返", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-eki/Universal-Studios-Japan"],
-        ["大阪酒店→关西机场（单程）", "返程兜底，不建议默认打车", "Uber Osaka→KIX均价约¥23,010；NAVITIME大阪站→KIX约¥18,700", "¥18,000-23,000", "约756-966元", "默认南海急行；只在误点/暴雨/行李崩溃时用", "https://www.uber.com/global/en/r/routes/osaka-osaka-jp-to-kix/"]
+        ["羽田T2→东京酒店（单程）", "抵达22:20，过22点有夜间溢价；太累/下雨/行李重再打", "Uber Hamacho↔HND均价约¥10,204，夜间按上浮留预算", "默认地铁；打车是第一晚疲劳保险", "https://www.uber.com/global/en/r/routes/hamacho-chuo-tokyo-jp-to-hnd/", "taxi-hnd-hotel"],
+        ["东京酒店→东京站（单程）", "7/10拖行李去新干线，短程最适合省力", "Rome2rio Hamacho Hotel→Tokyo Station taxi ¥2,000-2,500", "行李多就打，最值的一段", "https://www.rome2rio.com/s/Hamacho-Hotel-Tokyo/T%C5%8Dky%C5%8D-Station", "taxi-tokyo-station"],
+        ["teamLab→银座（单程）", "雨天或腿累时用，减少换乘和步行", "Rome2rio teamLab→Ginza taxi ¥2,300-2,800", "短程体验后可用，别全天靠车", "https://www.rome2rio.com/s/teamLab-Planets/Ginza", "taxi-teamlab-ginza"],
+        ["浅草→涩谷夜景（单程）", "跨城很贵，只在暴雨/错过预约/体力崩时用", "Uber Asakusa→Shibuya均价约¥7,981；Rome2rio约¥6,500-8,000", "默认地铁；这段打车性价比低", "https://www.uber.com/global/en/r/routes/asakusa-tobu-taito-tokyo-jp-to-shibuya-tokyo-jp/", "taxi-asakusa-shibuya"],
+        ["新大阪→大阪酒店（单程）", "到大阪带行李，想省力可从新大阪直接打", "Rome2rio Hanazonochō↔Shin-Osaka taxi ¥4,600-5,500", "默认Metro；下雨/热到崩再打", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-Station/Shin-%C5%8Csaka-Station", "taxi-shinosaka-hotel"],
+        ["大阪酒店⇄USJ（往返）", "按你酒店定位：1-10-4 Hanazonocho；早上去USJ，晚上回酒店，费用已含来回", "Rome2rio Hanazonochō→USJ taxi ¥4,100-4,900/单程；这里按往返×2", "只有赶开园/回程累崩才打；默认JR往返", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-eki/Universal-Studios-Japan", "taxi-usj-roundtrip"],
+        ["大阪酒店→关西机场（单程）", "返程兜底，不建议默认打车", "Uber Osaka→KIX均价约¥23,010；NAVITIME大阪站→KIX约¥18,700", "默认南海急行；只在误点/暴雨/行李崩溃时用", "https://www.uber.com/global/en/r/routes/osaka-osaka-jp-to-kix/", "taxi-kix"]
       ],
       nightReturns: [
-        ["7/7", "羽田T2→东京酒店", "落地后直接回酒店；地铁还能走，但你累就打", "¥10,000-12,500", "约420-525元", "第一晚最值得花钱省力"],
-        ["7/8", "银座/日本桥→东京酒店", "短程回KOKO，地铁/步行都行；下雨或腿酸打", "¥2,100-2,600", "约88-109元", "短程可打，性价比还行"],
-        ["7/9", "涩谷夜景→东京酒店", "夜景结束后最容易累；若22点后按夜间上浮留预算", "¥6,000-7,800", "约252-328元", "这晚建议预留打车钱"],
-        ["7/10", "难波/道顿堀→大阪酒店", "如果抵达大阪后去吃饭逛街，夜里回花园町", "¥2,000-3,000", "约84-126元", "近距离，累了就打"],
-        ["7/11", "USJ→大阪酒店", "这里只算晚上回程；若早上也打车，看USJ往返卡", "¥4,100-4,900", "约172-206元", "USJ后最可能用到"],
-        ["7/12", "心斋桥/道顿堀→大阪酒店", "最后购物夜，带东西回酒店", "¥2,000-3,000", "约84-126元", "购物多就打"],
-        ["合计", "只算夜归打车", "每天晚上都打车回酒店的保守预算", "¥26,200-33,800", "约1,100-1,420元", "如果USJ早上也打车，总额再加约172-206元"]
+        ["7/7", "羽田T2→东京酒店", "落地后直接回酒店；地铁还能走，但你累就打", "第一晚最值得花钱省力", "taxi-hnd-hotel"],
+        ["7/8", "银座/日本桥→东京酒店", "短程回KOKO，地铁/步行都行；下雨或腿酸打", "短程可打，性价比还行", "taxi-ginza-hotel"],
+        ["7/9", "涩谷夜景→东京酒店", "夜景结束后最容易累；若22点后按夜间上浮留预算", "这晚建议预留打车钱", "taxi-shibuya-hotel"],
+        ["7/10", "难波/道顿堀→大阪酒店", "如果抵达大阪后去吃饭逛街，夜里回花园町", "近距离，累了就打", "taxi-namba-hotel-0710"],
+        ["7/11", "USJ→大阪酒店", "这里只算晚上回程；若早上也打车，看USJ往返卡", "USJ后最可能用到", "taxi-usj-hotel"],
+        ["7/12", "心斋桥/道顿堀→大阪酒店", "最后购物夜，带东西回酒店", "购物多就打", "taxi-dotonbori-hotel"],
+        ["合计", "只算夜归打车", "每天晚上都打车回酒店的保守预算", "如果USJ早上也打车，总额再加约172-206元", "night-total"]
       ],
       sources: [
         ["机票", "去程NH966、返程HB341、香港船票来自你的携程截图；ANA官方航班状态需起飞前2天复核。", "已出票", "https://www.ana.co.jp/fs/int/en/"],
@@ -609,13 +709,93 @@
       ["预算师", "固定费用、餐饮、交通、购物分离，给控制总额。"],
       ["可视化师", "蛇形主线图、地图证据板、每日执行表。"]
     ];
-    const money = n => "¥" + Number(n).toLocaleString("zh-CN");
+    const money = n => "¥" + Number(n).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
+    const sheet = () => trip.budgetSheet || defaultTrip.budgetSheet;
+    const rate = () => Number(trip.settings?.jpyCny || defaultTrip.settings.jpyCny || 0.042);
+    const itemById = id => sheet().find(item => item.id === id);
+    const cnyRange = item => {
+      if (!item) return { low: 0, high: 0 };
+      const multiplier = item.currency === "JPY" ? rate() : 1;
+      const qty = Number(item.qty || 0);
+      const a = Number(item.low || 0) * qty * multiplier;
+      const b = Number(item.high || item.low || 0) * qty * multiplier;
+      return { low: Math.min(a, b), high: Math.max(a, b) };
+    };
+    const rawRange = item => {
+      if (!item) return "";
+      const qty = Number(item.qty || 0);
+      const a = Number(item.low || 0) * qty;
+      const b = Number(item.high || item.low || 0) * qty;
+      const low = Math.min(a, b);
+      const high = Math.max(a, b);
+      const sign = item.currency === "JPY" ? "¥" : "¥";
+      const suffix = item.currency === "JPY" ? "" : "元";
+      return low === high ? `${sign}${low.toLocaleString("zh-CN")}${suffix}` : `${sign}${low.toLocaleString("zh-CN")}-${high.toLocaleString("zh-CN")}${suffix}`;
+    };
+    const formatRange = range => Math.round(range.low) === Math.round(range.high)
+      ? money(range.low)
+      : `${money(range.low)}-${money(range.high)}`;
+    const plainRange = range => formatRange(range).replaceAll("¥", "");
+    const attr = value => String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+    const sumWhere = predicate => sheet().filter(item => item.active && predicate(item)).reduce((acc, item) => {
+      const range = cnyRange(item);
+      acc.low += range.low;
+      acc.high += range.high;
+      return acc;
+    }, { low: 0, high: 0 });
+    function budgetSummary() {
+      const fixed = sumWhere(item => item.group === "固定");
+      const food = sumWhere(item => item.group === "餐饮");
+      const transit = sumWhere(item => item.group === "公共交通" || item.group === "打车兜底");
+      return {
+        fixed,
+        food,
+        transit,
+        total: { low: fixed.low + food.low + transit.low, high: fixed.high + food.high + transit.high }
+      };
+    }
+    function syncLegacyBudget() {
+      const summary = budgetSummary();
+      trip.budget = {
+        fixed: Number(summary.fixed.high.toFixed(2)),
+        food: Number(summary.food.high.toFixed(2)),
+        transit: Number(summary.transit.high.toFixed(2)),
+        total: Number(summary.total.high.toFixed(2))
+      };
+    }
+    function dayCost(transitId, foodId, date) {
+      const transit = cnyRange(itemById(transitId));
+      const food = cnyRange(itemById(foodId));
+      const taxi = sheet().filter(item => item.active && item.group === "打车兜底" && item.name.startsWith(date)).reduce((acc, item) => {
+        const range = cnyRange(item);
+        acc.low += range.low; acc.high += range.high;
+        return acc;
+      }, { low: 0, high: 0 });
+      const taxiText = taxi.high > 0 ? ` + 打车${plainRange(taxi)}` : "";
+      return `交通${plainRange(transit)}${taxiText}，餐${plainRange(food)}`;
+    }
+    function legText(leg) {
+      const label = leg[0];
+      if (label === "航班") return `NH966｜${formatRange(cnyRange(itemById("flight-out")))}`;
+      if (label === "羽田→酒店") return `地铁${plainRange(cnyRange(itemById("transit-0707")))}｜打车${plainRange(cnyRange(itemById("taxi-hnd-hotel")))}`;
+      if (label === "东京市内") return `交通${plainRange(cnyRange(itemById("transit-0708")))}｜餐${plainRange(cnyRange(itemById("food-0708")))}`;
+      if (label === "浅草→涩谷") return `交通${plainRange(cnyRange(itemById("transit-0709")))}｜餐${plainRange(cnyRange(itemById("food-0709")))}`;
+      if (label === "东京→大阪") return `交通${plainRange(cnyRange(itemById("transit-0710")))}｜餐${plainRange(cnyRange(itemById("food-0710")))}`;
+      if (label === "USJ往返") return `JR${plainRange(cnyRange(itemById("transit-0711")))}｜餐${plainRange(cnyRange(itemById("food-0711")))}`;
+      if (label === "市区收尾") return `交通${plainRange(cnyRange(itemById("transit-0712")))}｜餐${plainRange(cnyRange(itemById("food-0712")))}`;
+      if (label === "去机场") return `交通${plainRange(cnyRange(itemById("transit-0713")))}｜餐${plainRange(cnyRange(itemById("food-0713")))}`;
+      return leg[1];
+    }
     function renderBudget() {
-      const b = trip.budget;
-      b.total = Number(b.fixed || 0) + Number(b.food || 0) + Number(b.transit || 0);
+      syncLegacyBudget();
+      const b = budgetSummary();
       document.querySelector("#budget").innerHTML = [
         ["固定已定", b.fixed], ["餐饮", b.food], ["日本交通", b.transit], ["控制总额", b.total]
-      ].map(([k,v]) => `<div class="metric"><span>${k}</span><strong>${money(v)}</strong></div>`).join("");
+      ].map(([k,v]) => `<div class="metric"><span>${k}</span><strong>${formatRange(v)}</strong></div>`).join("");
     }
     function renderHighlights() {
       document.querySelector("#highlights").innerHTML = trip.highlights.map(h => `
@@ -644,7 +824,7 @@
           <span class="date">${n[0]}</span><div class="dot"></div><b>${n[1]}</b><small>${n[2]}</small>
         </div>`;
       }).join("");
-      const legs = trip.legs.map(l => `<div class="leg" style="left:${l[2]}px;top:${l[3]}px"><b>${l[0]}</b>${l[1]}</div>`).join("");
+      const legs = trip.legs.map(l => `<div class="leg" style="left:${l[2]}px;top:${l[3]}px"><b>${l[0]}</b>${legText(l)}</div>`).join("");
       document.querySelector("#spine").innerHTML = `<svg viewBox="0 0 1180 620" aria-hidden="true"><path class="route-path" d="${d}"/></svg>${nodes}${legs}`;
     }
     function renderBases() {
@@ -654,34 +834,43 @@
     }
     function renderDays() {
       document.querySelector("#days").innerHTML = trip.days.map(d => `
-        <div class="row"><b>${d[0]}</b><div><b>${d[1]}</b><br><span class="day-note">${d[2]}</span></div><strong>${d[3]}</strong></div>
+        <div class="row"><b>${d[0]}</b><div><b>${d[1]}</b><br><span class="day-note">${d[2]}</span></div><strong>${dayCost(d[3], d[4], d[0])}</strong></div>
       `).join("");
     }
     function renderRides() {
       const rides = trip.rides || defaultTrip.rides;
-      document.querySelector("#rides").innerHTML = rides.map(r => `
-        <article class="ride-card">
+      document.querySelector("#rides").innerHTML = rides.map(r => {
+        const item = itemById(r[5]);
+        return `<article class="ride-card">
           <b>${r[0]}</b><br>
           <span>${r[1]}</span>
-          <strong>${r[4]}</strong>
-          <div>${r[3]}</div>
-          <div class="fare-line"><span class="pill warn">打车兜底</span><span class="pill">${r[5]}</span></div>
+          <strong>${formatRange(cnyRange(item))}</strong>
+          <div>${rawRange(item)}</div>
+          <div class="fare-line"><span class="pill warn">打车兜底</span><span class="pill">${r[3]}</span></div>
           <span>${r[2]}</span><br>
-          <a href="${r[6]}" target="_blank" rel="noreferrer">打开估价来源</a>
-        </article>
-      `).join("");
+          <a href="${r[4]}" target="_blank" rel="noreferrer">打开估价来源</a>
+        </article>`;
+      }).join("");
     }
     function renderNightReturns() {
       const returns = trip.nightReturns || defaultTrip.nightReturns;
-      document.querySelector("#night-returns").innerHTML = returns.map(r => `
-        <article class="night-card">
+      const nightIds = ["taxi-hnd-hotel", "taxi-ginza-hotel", "taxi-shibuya-hotel", "taxi-namba-hotel-0710", "taxi-usj-hotel", "taxi-dotonbori-hotel"];
+      const total = nightIds.reduce((acc, id) => {
+        const range = cnyRange(itemById(id));
+        acc.low += range.low; acc.high += range.high;
+        return acc;
+      }, { low: 0, high: 0 });
+      document.querySelector("#night-returns").innerHTML = returns.map(r => {
+        const range = r[4] === "night-total" ? total : cnyRange(itemById(r[4]));
+        const raw = r[4] === "night-total" ? "夜归单程合计" : rawRange(itemById(r[4]));
+        return `<article class="night-card">
           <b>${r[0]} ${r[1]}</b><br>
           <span>${r[2]}</span>
-          <strong>${r[4]}</strong>
-          <div>${r[3]}</div>
-          <div class="fare-line"><span class="pill warn">夜归兜底</span><span class="pill">${r[5]}</span></div>
-        </article>
-      `).join("");
+          <strong>${formatRange(range)}</strong>
+          <div>${raw}</div>
+          <div class="fare-line"><span class="pill warn">夜归兜底</span><span class="pill">${r[3]}</span></div>
+        </article>`;
+      }).join("");
     }
     function renderSources() {
       document.querySelector("#sources").innerHTML = trip.sources.map(s => `
@@ -710,6 +899,35 @@
         </article>
       `).join("");
     }
+    function renderBudgetSheet() {
+      document.querySelector("#rate-jpy").value = rate();
+      document.querySelector("#budget-sheet").innerHTML = `
+        <thead>
+          <tr>
+            <th>计入</th><th>分类</th><th>项目</th><th>币种</th><th>低价</th><th>高价</th><th>数量</th><th>人民币联动</th><th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sheet().map(item => {
+            const range = cnyRange(item);
+            return `<tr data-id="${item.id}">
+              <td data-label="计入"><input type="checkbox" data-field="active" ${item.active ? "checked" : ""}></td>
+              <td data-label="分类"><select data-field="group">
+                ${["固定", "餐饮", "公共交通", "打车兜底"].map(g => `<option value="${g}" ${item.group === g ? "selected" : ""}>${g}</option>`).join("")}
+              </select></td>
+              <td data-label="项目"><input data-field="name" value="${attr(item.name)}"></td>
+              <td data-label="币种"><select data-field="currency">
+                ${["CNY", "JPY"].map(c => `<option value="${c}" ${item.currency === c ? "selected" : ""}>${c}</option>`).join("")}
+              </select></td>
+              <td data-label="低价"><input class="num-input" type="number" step="0.01" data-field="low" value="${attr(item.low)}"></td>
+              <td data-label="高价"><input class="num-input" type="number" step="0.01" data-field="high" value="${attr(item.high)}"></td>
+              <td data-label="数量"><input class="qty-input" type="number" step="0.1" data-field="qty" value="${attr(item.qty)}"></td>
+              <td data-label="人民币" class="calc-cell"><strong>${formatRange(range)}</strong></td>
+              <td data-label="说明"><input data-field="note" value="${attr(item.note)}"></td>
+            </tr>`;
+          }).join("")}
+        </tbody>`;
+    }
     function renderWorkflow() {
       const host = document.querySelector("#workflow");
       if (host) host.innerHTML = workflow.map((w, i) => `<div class="step"><b>${i + 1}. ${w[0]}</b>${w[1]}</div>`).join("");
@@ -727,7 +945,18 @@
       if (trip.days[2]) b.value = trip.days[2][0];
     }
     function renderAll() {
-      renderBudget(); renderHighlights(); renderWeather(); renderSpine(); renderBases(); renderDays(); renderRides(); renderNightReturns(); renderSources(); renderMaps(); renderPrompts(); renderResearch(); renderChecklist(); renderWorkflow(); renderEditor(); renderSwapControls();
+      renderBudget(); renderHighlights(); renderWeather(); renderSpine(); renderBases(); renderDays(); renderRides(); renderNightReturns(); renderSources(); renderMaps(); renderPrompts(); renderResearch(); renderChecklist(); renderBudgetSheet(); renderWorkflow(); renderEditor(); renderSwapControls();
+    }
+    function renderLinkedNumbers() {
+      renderBudget(); renderSpine(); renderDays(); renderRides(); renderNightReturns(); renderEditor();
+    }
+    function saveTrip() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(trip));
+      const el = document.querySelector("#sheet-save");
+      if (!el) return;
+      el.textContent = "已保存";
+      clearTimeout(saveTrip.timer);
+      saveTrip.timer = setTimeout(() => { el.textContent = "自动保存"; }, 1200);
     }
     function setStatus(id, text) {
       const el = document.querySelector(id);
@@ -783,8 +1012,21 @@
       return true;
     }
     function asMarkdown() {
-      const rideText = (trip.rides || defaultTrip.rides).map(r=>`${r[0]}：${r[3]} / ${r[4]}，${r[5]}`).join("\n");
-      const nightText = (trip.nightReturns || defaultTrip.nightReturns).map(r=>`${r[0]} ${r[1]}：${r[3]} / ${r[4]}，${r[5]}`).join("\n");
+      syncLegacyBudget();
+      const rideText = (trip.rides || defaultTrip.rides).map(r=>{
+        const item = itemById(r[5]);
+        return `${r[0]}：${rawRange(item)} / ${formatRange(cnyRange(item))}，${r[3]}`;
+      }).join("\n");
+      const nightIds = ["taxi-hnd-hotel", "taxi-ginza-hotel", "taxi-shibuya-hotel", "taxi-namba-hotel-0710", "taxi-usj-hotel", "taxi-dotonbori-hotel"];
+      const nightTotal = nightIds.reduce((acc, id) => {
+        const range = cnyRange(itemById(id));
+        acc.low += range.low; acc.high += range.high;
+        return acc;
+      }, { low: 0, high: 0 });
+      const nightText = (trip.nightReturns || defaultTrip.nightReturns).map(r=>{
+        const range = r[4] === "night-total" ? nightTotal : cnyRange(itemById(r[4]));
+        return `${r[0]} ${r[1]}：${formatRange(range)}，${r[3]}`;
+      }).join("\n");
       const checkText = (trip.checklist || defaultTrip.checklist).map(s=>`### ${s[0]}\n${s[1].map(i=>`- ${i[0]}：${i[1]}`).join("\n")}`).join("\n");
       return `# ${trip.name}\n\n## 爽点\n${trip.highlights.map(h=>`${h[0]} ${h[1]}：${h[2]}`).join("\n")}\n\n## 主线\n${trip.nodes.map(n=>`${n[0]} ${n[1]}：${n[2]}`).join("\n")}\n\n## 打车兜底\n${rideText}\n\n## 每天晚上回酒店\n${nightText}\n\n## 清单\n${checkText}\n\n## 预算\n固定${trip.budget.fixed}，餐饮${trip.budget.food}，交通${trip.budget.transit}，合计${trip.budget.total}`;
     }
@@ -806,22 +1048,58 @@
     document.querySelector("#copy-md").onclick = () => navigator.clipboard.writeText(asMarkdown());
     document.querySelector("#copy-json").onclick = () => navigator.clipboard.writeText(JSON.stringify(trip, null, 2));
     document.querySelector("#make-brief").onclick = makeBrief;
+    document.querySelector("#rate-jpy").addEventListener("input", e => {
+      trip.settings = trip.settings || {};
+      trip.settings.jpyCny = Number(e.target.value || 0);
+      document.querySelectorAll("#budget-sheet tr[data-id]").forEach(row => {
+        const item = itemById(row.dataset.id);
+        row.querySelector(".calc-cell").innerHTML = `<strong>${formatRange(cnyRange(item))}</strong>`;
+      });
+      renderLinkedNumbers();
+      saveTrip();
+    });
+    document.querySelector("#budget-sheet").addEventListener("input", e => {
+      const row = e.target.closest("tr[data-id]");
+      if (!row) return;
+      const item = itemById(row.dataset.id);
+      const field = e.target.dataset.field;
+      if (!item || !field) return;
+      if (["low", "high", "qty"].includes(field)) item[field] = Number(e.target.value || 0);
+      else item[field] = e.target.value;
+      row.querySelector(".calc-cell").innerHTML = `<strong>${formatRange(cnyRange(item))}</strong>`;
+      renderLinkedNumbers();
+      saveTrip();
+    });
+    document.querySelector("#budget-sheet").addEventListener("change", e => {
+      const row = e.target.closest("tr[data-id]");
+      if (!row) return;
+      const item = itemById(row.dataset.id);
+      const field = e.target.dataset.field;
+      if (!item || !field) return;
+      if (field === "active") item.active = e.target.checked;
+      else item[field] = e.target.value;
+      renderLinkedNumbers();
+      renderBudgetSheet();
+      saveTrip();
+    });
     document.querySelector("#swap-days").onclick = () => {
       const ok = swapDayContent(document.querySelector("#swap-a").value, document.querySelector("#swap-b").value);
       renderAll();
+      saveTrip();
       setStatus("#quick-status", ok ? "已交换两天行程，主线和每日表已同步" : "请选择两个不同日期");
     };
     document.querySelector("#apply-json").onclick = () => {
       try {
         trip = JSON.parse(document.querySelector("#json-editor").value);
         renderAll();
+        saveTrip();
         setStatus("#json-status", "已应用到当前页面");
       } catch (error) {
         setStatus("#json-status", "JSON格式错误: " + error.message);
       }
     };
     document.querySelector("#save-local").onclick = () => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(trip));
+      saveTrip();
       setStatus("#json-status", "已保存到本机浏览器");
     };
     document.querySelector("#reset-trip").onclick = () => {
