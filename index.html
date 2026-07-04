@@ -10,12 +10,13 @@
       --bg: oklch(0.965 0.008 245);
       --surface: oklch(1 0 0);
       --soft: oklch(0.935 0.014 248);
+      --soft-2: oklch(0.9 0.018 248);
       --ink: oklch(0.2 0.045 252);
-      --muted: oklch(0.47 0.032 252);
-      --line: oklch(0.86 0.018 248);
-      --accent: oklch(0.5 0.18 255);
-      --green: oklch(0.55 0.15 158);
-      --gold: oklch(0.67 0.15 80);
+      --muted: oklch(0.45 0.032 252);
+      --line: oklch(0.84 0.018 248);
+      --accent: oklch(0.45 0.16 255);
+      --green: oklch(0.51 0.13 158);
+      --amber: oklch(0.62 0.12 74);
     }
     * { box-sizing: border-box; }
     body {
@@ -25,7 +26,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
       letter-spacing: 0;
     }
-    button, input, textarea { font: inherit; }
+    button, input, textarea, select { font: inherit; }
     button {
       min-height: 38px;
       border: 1px solid var(--ink);
@@ -40,7 +41,14 @@
       color: var(--ink);
       border-color: var(--line);
     }
-    .app { max-width: 1440px; margin: 0 auto; padding: 18px; }
+    button:hover { filter: brightness(.96); }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+      outline: 2px solid color-mix(in oklch, var(--accent) 70%, white);
+      outline-offset: 2px;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .app { max-width: 1480px; margin: 0 auto; padding: 18px; }
     .top {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -50,6 +58,8 @@
       border-bottom: 1px solid var(--line);
     }
     h1 { margin: 0; font-size: 28px; line-height: 1.1; }
+    h2 { margin: 0; font-size: 18px; line-height: 1.2; }
+    h3 { margin: 0 0 8px; font-size: 15px; }
     .sub { margin-top: 8px; color: var(--muted); font-size: 14px; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .tabs {
@@ -66,14 +76,6 @@
       white-space: nowrap;
     }
     .tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
-    .grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.6fr) minmax(320px, .8fr);
-      gap: 14px;
-      align-items: start;
-    }
-    .route-grid { grid-template-columns: 1fr; }
-    .route-grid .stack { grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); }
     .panel {
       border: 1px solid var(--line);
       border-radius: 10px;
@@ -87,34 +89,86 @@
       padding: 14px 15px;
       border-bottom: 1px solid var(--line);
     }
-    h2 { margin: 0; font-size: 18px; line-height: 1.2; }
     .hint { margin-top: 4px; color: var(--muted); font-size: 12px; }
     .budget {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      border-bottom: 1px solid var(--line);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
       background: var(--surface);
     }
     .metric { padding: 14px; border-right: 1px solid var(--line); }
     .metric:last-child { border-right: 0; }
     .metric span { display: block; color: var(--muted); font-size: 12px; }
     .metric strong { display: block; margin-top: 5px; font-size: 22px; }
+    .insight-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+    .highlight-list, .weather-grid, .source-grid, .base-grid {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+    .highlight {
+      display: grid;
+      grid-template-columns: 80px 1fr auto;
+      gap: 10px;
+      align-items: start;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .highlight:last-child { border-bottom: 0; padding-bottom: 0; }
+    .highlight b, .weather-card b, .source-card b { font-size: 14px; }
+    .highlight span, .weather-card span, .source-card span, .day-note { color: var(--muted); }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: var(--soft);
+      color: var(--ink);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .pill.good { border-color: color-mix(in oklch, var(--green) 35%, var(--line)); color: var(--green); }
+    .pill.warn { border-color: color-mix(in oklch, var(--amber) 45%, var(--line)); color: var(--amber); }
+    .weather-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .weather-card, .source-card, .base-card, .step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px;
+      background: var(--surface);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .weather-card strong { display: block; margin: 5px 0 4px; font-size: 18px; }
     .spine-wrap {
+      margin-top: 14px;
       overflow-x: auto;
       padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
       background:
         linear-gradient(var(--surface), var(--surface)),
-        radial-gradient(circle at 1px 1px, color-mix(in oklch, var(--line) 80%, transparent) 1px, transparent 0);
+        radial-gradient(circle at 1px 1px, color-mix(in oklch, var(--line) 78%, transparent) 1px, transparent 0);
       background-size: auto, 24px 24px;
     }
     .spine {
       position: relative;
-      width: 850px;
-      height: 520px;
+      width: 1180px;
+      height: 620px;
       margin: 0 auto;
     }
     .spine svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-    .spine path {
+    .route-path {
       fill: none;
       stroke: var(--ink);
       stroke-width: 5;
@@ -123,53 +177,59 @@
     }
     .node {
       position: absolute;
-      width: 126px;
+      width: 132px;
       transform: translate(-50%, -50%);
       text-align: center;
+      font-size: 12px;
+    }
+    .node .date {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: var(--surface);
+      font-weight: 700;
+      white-space: nowrap;
     }
     .dot {
-      width: 34px;
-      height: 34px;
-      margin: 0 auto 8px;
-      border: 4px solid #fff;
+      width: 30px;
+      height: 30px;
+      margin: 7px auto 7px;
+      border: 5px solid #fff;
       border-radius: 50%;
       background: var(--ink);
       box-shadow: 0 0 0 2px var(--ink);
     }
-    .node small { display: block; color: var(--muted); font-size: 12px; }
-    .node b { display: block; margin-top: 3px; font-size: 16px; line-height: 1.22; }
+    .node b { display: block; font-size: 16px; line-height: 1.2; }
+    .node small { display: block; margin-top: 3px; color: var(--muted); line-height: 1.2; }
     .leg {
       position: absolute;
-      width: 152px;
+      width: 170px;
       transform: translate(-50%, -50%);
       border: 1px solid var(--ink);
-      border-radius: 3px;
+      border-radius: 6px;
       background: var(--surface);
       padding: 8px;
       font-size: 12px;
       line-height: 1.35;
     }
     .leg b { display: block; font-size: 13px; }
-    .bases {
+    .base-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .base-card { background: var(--soft); }
+    .bottom-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      padding: 14px;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+      gap: 14px;
+      margin-top: 14px;
+      align-items: start;
     }
-    .base {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 11px;
-      background: var(--soft);
-      font-size: 13px;
-      line-height: 1.45;
-    }
-    .base b { display: block; margin-bottom: 4px; font-size: 14px; }
-    .stack { display: grid; gap: 14px; }
     .list { padding: 12px 14px; display: grid; gap: 10px; }
     .row {
       display: grid;
-      grid-template-columns: 92px 1fr auto;
+      grid-template-columns: 76px 1fr auto;
       gap: 10px;
       align-items: start;
       padding-bottom: 10px;
@@ -178,7 +238,7 @@
     }
     .row:last-child { border-bottom: 0; padding-bottom: 0; }
     .row b { font-size: 14px; }
-    .row span { color: var(--muted); }
+    .source-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .map-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -188,13 +248,19 @@
     .map-card { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
     .map-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; object-position: left top; display: block; }
     .map-card div { padding: 9px; font-size: 13px; line-height: 1.35; }
-    .prompt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 14px; }
+    .prompt-grid, .workbench, .workflow { display: grid; gap: 12px; padding: 14px; }
+    .prompt-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .prompt { border: 1px solid var(--line); border-radius: 8px; padding: 11px; background: var(--surface); }
-    .prompt h3 { margin: 0 0 7px; font-size: 15px; }
-    .workbench { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 14px; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; }
+    .workbench { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); padding: 0; }
+    .workflow { grid-template-columns: repeat(3, 1fr); }
+    .form-grid, .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px;
+    }
     .field label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 12px; }
-    input {
+    input, select {
       width: 100%;
       min-height: 38px;
       border: 1px solid var(--line);
@@ -215,21 +281,19 @@
       font-size: 12px;
       line-height: 1.45;
     }
-    .json-box { min-height: 380px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
-    .workflow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px; }
-    .step { border: 1px solid var(--line); border-radius: 8px; padding: 11px; background: var(--surface); font-size: 13px; line-height: 1.45; }
-    .step b { display: block; margin-bottom: 5px; font-size: 14px; }
+    .json-box { min-height: 430px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
     .status { min-height: 22px; padding: 0 14px 14px; color: var(--muted); font-size: 13px; }
     .source { padding: 14px; color: var(--muted); font-size: 13px; line-height: 1.55; }
     .hidden { display: none; }
-    @media (max-width: 860px) {
+    @media (max-width: 900px) {
       .app { padding: 12px; }
-      .top, .grid { grid-template-columns: 1fr; }
+      .top, .insight-grid, .bottom-grid, .workbench { grid-template-columns: 1fr; }
       .actions { justify-content: flex-start; }
       .budget { grid-template-columns: 1fr 1fr; }
       .metric:nth-child(2) { border-right: 0; }
       .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
-      .bases, .map-grid, .prompt-grid, .workbench, .workflow, .form-grid, .route-grid .stack { grid-template-columns: 1fr; }
+      .weather-grid, .source-grid, .base-grid, .map-grid, .prompt-grid, .workflow, .form-grid, .tool-grid { grid-template-columns: 1fr; }
+      .spine { width: 1040px; }
     }
   </style>
 </head>
@@ -247,38 +311,63 @@
     </header>
 
     <nav class="tabs">
-      <button class="tab active" data-view="route">脉络</button>
-      <button class="tab" data-view="build">建档</button>
+      <button class="tab active" data-view="route">总览</button>
+      <button class="tab" data-view="build">调整</button>
       <button class="tab" data-view="maps">交通证据</button>
       <button class="tab" data-view="agent">AI管家</button>
-      <button class="tab" data-view="research">GitHub参考</button>
+      <button class="tab" data-view="research">来源逻辑</button>
     </nav>
 
     <section id="route" class="view">
       <div class="budget" id="budget"></div>
-      <div class="grid route-grid" style="margin-top:14px">
+
+      <div class="insight-grid">
         <section class="panel">
-          <div class="panel-head">
-            <div><h2>主行程脉络</h2><div class="hint">酒店不进主线；第二排从右向左，线不断</div></div>
-          </div>
-          <div class="spine-wrap"><div class="spine" id="spine"></div></div>
-          <div class="bases" id="bases"></div>
+          <div class="panel-head"><div><h2>核心爽点</h2><div class="hint">先判断这趟值不值得期待</div></div></div>
+          <div class="highlight-list" id="highlights"></div>
         </section>
-        <aside class="stack">
-          <section class="panel">
-            <div class="panel-head"><div><h2>每日执行表</h2><div class="hint">以后换国家也按这个结构填</div></div></div>
-            <div class="list" id="days"></div>
-          </section>
-          <section class="panel">
-            <div class="panel-head"><div><h2>Token策略</h2><div class="hint">只传差异，不重传全文</div></div></div>
-            <div class="source">每次让AI更新旅行，只给：变更事实、约束、要更新的模块。不要把整份行程复制一遍。输出固定为 JSON diff + 人话摘要。</div>
-          </section>
-        </aside>
+        <section class="panel">
+          <div class="panel-head"><div><h2>天气看板</h2><div class="hint">预报生成于 2026-07-04；出发前和每天早上复核</div></div></div>
+          <div class="weather-grid" id="weather"></div>
+        </section>
+      </div>
+
+      <section class="panel" style="margin-top:14px">
+        <div class="panel-head">
+          <div><h2>大脉络图</h2><div class="hint">一条线串联所有关键节点；日期独立成标签，交通预算写在连接处</div></div>
+          <button class="secondary" data-view-jump="build">调整节点</button>
+        </div>
+        <div class="spine-wrap"><div class="spine" id="spine"></div></div>
+        <div class="base-grid" id="bases"></div>
+      </section>
+
+      <div class="bottom-grid">
+        <section class="panel">
+          <div class="panel-head"><div><h2>每日执行表</h2><div class="hint">当天目标、交通预算、餐饮预算放在同一行</div></div></div>
+          <div class="list" id="days"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><div><h2>信息来源校验</h2><div class="hint">把“确定事实”和“需临近复核”分开</div></div></div>
+          <div class="source-grid" id="sources"></div>
+        </section>
       </div>
     </section>
 
     <section id="build" class="view hidden">
       <div class="workbench">
+        <section class="panel">
+          <div class="panel-head">
+            <div><h2>快速调整</h2><div class="hint">不用写代码，先解决最常见的“两天互换”</div></div>
+            <button id="swap-days">交换两天</button>
+          </div>
+          <div class="tool-grid">
+            <div class="field"><label>日期 A</label><select id="swap-a"></select></div>
+            <div class="field"><label>日期 B</label><select id="swap-b"></select></div>
+          </div>
+          <div class="source">交换后会同步：每日执行表 + 主线节点顺序 + 节点日期。天气仍按日期显示，所以你能立刻判断换行程是否更合理。</div>
+          <div class="status" id="quick-status"></div>
+        </section>
+
         <section class="panel">
           <div class="panel-head"><div><h2>新旅行建档</h2><div class="hint">填少量事实，生成低token建档提示词</div></div><button id="make-brief">生成提示词</button></div>
           <div class="form-grid">
@@ -291,28 +380,25 @@
           </div>
           <div style="padding:0 14px 14px"><textarea id="brief-output" readonly></textarea></div>
         </section>
-        <section class="panel">
-          <div class="panel-head">
-            <div><h2>Trip JSON 工作台</h2><div class="hint">改完应用，可保存到本机浏览器</div></div>
-            <div class="actions">
-              <button class="secondary" id="apply-json">应用</button>
-              <button class="secondary" id="save-local">保存本机</button>
-              <button class="secondary" id="reset-trip">恢复默认</button>
-            </div>
-          </div>
-          <div style="padding:14px"><textarea class="json-box" id="json-editor"></textarea></div>
-          <div class="status" id="json-status"></div>
-        </section>
       </div>
+
       <section class="panel" style="margin-top:14px">
-        <div class="panel-head"><div><h2>一站式智能体流程</h2><div class="hint">以后所有跨国旅行都按这个流水线走</div></div></div>
-        <div class="workflow" id="workflow"></div>
+        <div class="panel-head">
+          <div><h2>Trip JSON 工作台</h2><div class="hint">高级改法：直接改数据，应用后页面立即重绘</div></div>
+          <div class="actions">
+            <button class="secondary" id="apply-json">应用</button>
+            <button class="secondary" id="save-local">保存本机</button>
+            <button class="secondary" id="reset-trip">恢复默认</button>
+          </div>
+        </div>
+        <div style="padding:14px"><textarea class="json-box" id="json-editor"></textarea></div>
+        <div class="status" id="json-status"></div>
       </section>
     </section>
 
     <section id="maps" class="view hidden">
       <section class="panel">
-        <div class="panel-head"><div><h2>关键两点交通证据</h2><div class="hint">Google Maps截图作位置感参考，实时结果以当天查询为准</div></div></div>
+        <div class="panel-head"><div><h2>关键两点交通证据</h2><div class="hint">Google Maps截图作位置感参考；当天时间以实时查询为准</div></div></div>
         <div class="map-grid" id="map-grid"></div>
       </section>
     </section>
@@ -326,67 +412,95 @@
 
     <section id="research" class="view hidden">
       <section class="panel">
-        <div class="panel-head"><div><h2>GitHub调研转化</h2><div class="hint">取结构，不搬重代码</div></div></div>
+        <div class="panel-head"><div><h2>旅行社式系统逻辑</h2><div class="hint">事实层、决策层、展示层分开，才能复用</div></div></div>
         <div class="list" id="research-list"></div>
       </section>
     </section>
   </main>
 
   <script>
-    const STORAGE_KEY = "ai-travel-butler-trip-v2";
+    const STORAGE_KEY = "ai-travel-butler-trip-v3";
     const clone = value => JSON.parse(JSON.stringify(value));
+    const routeSlots = [
+      [90, 190], [235, 190], [380, 190], [525, 190], [670, 190], [815, 190], [960, 190],
+      [960, 430], [815, 430], [670, 430], [525, 430], [380, 430], [235, 430]
+    ];
     const defaultTrip = {
       name: "日本 2026",
       budget: { fixed: 8228.01, food: 2100, transit: 1600, total: 11928.01 },
       bases: [
-        { city: "东京", name: "KOKO Hotel Premier Nihonbashi Hamacho", date: "7/7-7/10", cost: 2000, note: "滨町站附近" },
-        { city: "大阪", name: "川House 难波南-花园町", date: "7/10-7/13", cost: 787.01, note: "花园町站附近" }
+        { city: "东京", name: "KOKO Hotel Premier Nihonbashi Hamacho", date: "7/7-7/10", cost: 2000, note: "滨町站附近，东京段省力基地" },
+        { city: "大阪", name: "川House 难波南-花园町", date: "7/10-7/13", cost: 787.01, note: "花园町站附近，大阪段省钱基地" }
+      ],
+      highlights: [
+        ["7/8", "teamLab + 银座/日本桥", "第一整天轻体验，不把体力打爆", "已购"],
+        ["7/9", "浅草白天 + 涩谷夜景", "白天街区感，晚上城市高点", "已购"],
+        ["7/10", "东海道新干线", "东京到大阪的核心移动体验", "单买"],
+        ["7/11", "USJ", "整天只做一件大事，路线简单", "已购"],
+        ["7/12", "难波/心斋桥/道顿堀", "大阪收尾和购物弹性放这天", "自由"]
+      ],
+      weather: [
+        ["7/7", "东京", "20-25℃", "上午阵雨，抵达夜间注意轻雨具", "雨"],
+        ["7/8", "东京", "21-29℃", "厚云为主，适合室内teamLab", "稳"],
+        ["7/9", "东京", "23-31℃", "闷热，浅草步行要少晒", "热"],
+        ["7/10", "东京→大阪", "23-33℃", "炎热潮湿，移动日多补水", "热"],
+        ["7/11", "大阪", "26-33℃", "多云偏热，USJ排队注意防暑", "热"],
+        ["7/12", "大阪", "26-33℃", "有阵雨，市区逛街更适合弹性走", "雨"],
+        ["7/13", "大阪/香港/深圳", "26-37℃", "大阪雨雷、深港有雨；船班当天复核", "查"]
       ],
       nodes: [
-        ["7/7","深圳宝安","NH966 出发",60,175],
-        ["7/7","东京羽田","22:20 抵达",205,175],
-        ["7/8","teamLab","票已购108",350,175],
-        ["7/8","银座/日本桥","轻逛",495,175],
-        ["7/9","浅草","街区拍照",640,175],
-        ["7/9","涩谷夜景","票已购200",785,175],
-        ["7/10","东京站","新干线",785,390],
-        ["7/10","新大阪/大阪","入住大阪",665,390],
-        ["7/11","USJ","门票320",545,390],
-        ["7/12","难波/心斋桥","道顿堀",425,390],
-        ["7/13","关西机场","HB341",305,390],
-        ["7/13","香港机场","17:15",185,390],
-        ["7/13","蛇口/深圳","19:00船",60,390]
+        ["7/7", "深圳宝安", "NH966 出发"],
+        ["7/7", "东京羽田", "22:20 抵达"],
+        ["7/8", "teamLab", "票已购108"],
+        ["7/8", "银座/日本桥", "轻逛"],
+        ["7/9", "浅草", "街区拍照"],
+        ["7/9", "涩谷夜景", "票已购200"],
+        ["7/10", "东京站", "新干线"],
+        ["7/10", "新大阪/大阪", "入住大阪"],
+        ["7/11", "USJ", "门票320"],
+        ["7/12", "难波/心斋桥", "道顿堀"],
+        ["7/13", "关西机场", "HB341"],
+        ["7/13", "香港机场", "17:15"],
+        ["7/13", "蛇口/深圳", "19:00船"]
       ],
       legs: [
-        ["航班","NH966｜2240元",132,93],
-        ["羽田→酒店","地铁35-50｜打车400-500",260,250],
-        ["东京市内","交通60-100｜餐300",422,93],
-        ["浅草→涩谷","交通60-80｜餐300",572,250],
-        ["东京→大阪","新干线约736｜餐300",778,285],
-        ["USJ往返","50-70｜餐300",604,470],
-        ["市区收尾","30-50｜餐300",455,470],
-        ["去机场","60-90｜餐300",270,470],
-        ["返深","香港船票另计",120,470]
+        ["航班", "NH966｜2240元", 162, 92],
+        ["羽田→酒店", "地铁35-50｜打车400-500", 285, 302],
+        ["东京市内", "交通60-100｜餐300", 452, 92],
+        ["浅草→涩谷", "交通60-80｜餐300", 672, 302],
+        ["东京→大阪", "新干线约736｜餐300", 972, 302],
+        ["USJ往返", "50-70｜餐300", 875, 530],
+        ["市区收尾", "30-50｜餐300", 640, 530],
+        ["去机场", "60-90｜餐300", 455, 530],
+        ["返深", "香港船票另计", 275, 530]
       ],
       days: [
-        ["7/7","深圳→东京","NH966到羽田；地铁去东京基地，太晚打车兜底","交通50/450，餐300"],
-        ["7/8","teamLab→银座/日本桥","东京第一整天轻体验，地铁优先","交通80，餐300"],
-        ["7/9","浅草→涩谷夜景","上午浅草，晚上涩谷夜景","交通80，餐300"],
-        ["7/10","东京→大阪","东京站新干线到新大阪，再到花园町","交通800，餐300"],
-        ["7/11","USJ","当天只做USJ，降低疲劳","交通70，餐300"],
-        ["7/12","难波/心斋桥/道顿堀","大阪自由收尾，购物另算","交通50，餐300"],
-        ["7/13","大阪→香港→深圳","南海急行去机场，香港转船回蛇口","交通90，餐300"]
+        ["7/7", "深圳→东京", "NH966到羽田；地铁去东京基地，太晚打车兜底", "交通50/450，餐300"],
+        ["7/8", "teamLab→银座/日本桥", "东京第一整天轻体验，地铁优先", "交通80，餐300"],
+        ["7/9", "浅草→涩谷夜景", "上午浅草，晚上涩谷夜景", "交通80，餐300"],
+        ["7/10", "东京→大阪", "东京站新干线到新大阪，再到花园町", "交通800，餐300"],
+        ["7/11", "USJ", "当天只做USJ，降低疲劳", "交通70，餐300"],
+        ["7/12", "难波/心斋桥/道顿堀", "大阪自由收尾，购物另算", "交通50，餐300"],
+        ["7/13", "大阪→香港→深圳", "南海急行去机场，香港转船回蛇口", "交通90，餐300"]
+      ],
+      sources: [
+        ["机票", "去程NH966、返程HB341、香港船票来自你的携程截图；ANA官方航班状态需起飞前2天复核。", "已出票", "https://www.ana.co.jp/fs/int/en/"],
+        ["酒店", "东京KOKO 2000元；大阪川House 787.01元；均来自你的订单截图。", "已付款", ""],
+        ["门票", "teamLab 108元、涩谷夜景200元、USJ 320元来自你已购信息。", "已购买", ""],
+        ["交通", "路线依据Google Maps截图和日本地铁/新干线常规方案；当天用地图复核站台与耗时。", "需复核", ""],
+        ["日本天气", "东京/大阪预报按2026-07-04查询结果写入；官方可交叉看JMA。", "临近复核", "https://www.data.jma.go.jp/multi/yoho/yoho_detail.html?code=130010&lang=en"],
+        ["深港天气", "香港/深圳转场受雨和热影响；香港预警看香港天文台。", "临近复核", "https://www.hko.gov.hk/en/index.html"]
       ],
       maps: [
-        ["羽田机场 → 东京住宿基地","京急/都营浅草线；深夜太累打车兜底","assets/maps/01-hnd-koko.png"],
-        ["东京住宿基地 → teamLab","地铁换乘到丰洲方向","assets/maps/02-koko-teamlab.png"],
-        ["teamLab → 银座/日本桥","轻逛后回酒店","assets/maps/03-teamlab-ginza.png"],
-        ["东京住宿基地 → 浅草","都营浅草线最顺","assets/maps/04-koko-asakusa.png"],
-        ["浅草 → 涩谷夜景","地铁组合前往涩谷","assets/maps/05-asakusa-shibuya.png"],
-        ["东京住宿基地 → 东京站","退房带行李，地铁或短程打车","assets/maps/06-koko-tokyo-station.png"],
-        ["东京站 → 新大阪站","东海道新干线指定席","assets/maps/07-tokyo-shinosaka.png"],
-        ["新大阪 → 大阪住宿基地","Metro换乘到花园町附近","assets/maps/08-shinosaka-osaka-hotel.png"],
-        ["大阪住宿基地 → USJ","JR到西九条转梦咲线","assets/maps/09-osaka-hotel-usj.png"]
+        ["羽田机场 → 东京住宿基地", "京急/都营浅草线；深夜太累打车兜底", "assets/maps/01-hnd-koko.png"],
+        ["东京住宿基地 → teamLab", "地铁换乘到丰洲方向", "assets/maps/02-koko-teamlab.png"],
+        ["teamLab → 银座/日本桥", "轻逛后回酒店", "assets/maps/03-teamlab-ginza.png"],
+        ["东京住宿基地 → 浅草", "都营浅草线最顺", "assets/maps/04-koko-asakusa.png"],
+        ["浅草 → 涩谷夜景", "地铁组合前往涩谷", "assets/maps/05-asakusa-shibuya.png"],
+        ["东京住宿基地 → 东京站", "退房带行李，地铁或短程打车", "assets/maps/06-koko-tokyo-station.png"],
+        ["东京站 → 新大阪站", "东海道新干线指定席", "assets/maps/07-tokyo-shinosaka.png"],
+        ["新大阪 → 大阪住宿基地", "Metro换乘到花园町附近", "assets/maps/08-shinosaka-osaka-hotel.png"],
+        ["大阪住宿基地 → USJ", "JR到西九条转梦咲线", "assets/maps/09-osaka-hotel-usj.png"]
       ]
     };
     let trip = (() => {
@@ -398,26 +512,26 @@
       }
     })();
     const research = [
-      ["TREK","一站式旅行规划应有地图、预算、协作、清单；我们先取地图+预算+路线核心。"],
-      ["Wanderlog/TripIt范式","邮箱/预订项适合作为固定事实层；酒店不该混进游玩节点。"],
-      ["LangGraph/CrewAI旅行项目","适合拆成研究员、路线师、预算师、可视化师；本站用提示词先实现轻量编排。"],
-      ["OpenTripPlanner/OSM范式","复杂实时公共交通可后接API；当前用地图截图证据和人工预算更省token。"]
+      ["事实层", "把机票、酒店、门票、签证、天气、交通截图分开存。页面只引用事实，不把猜测当确定。", "核心"],
+      ["决策层", "每个节点只回答三件事：为什么去、怎么去、要花多少钱。两天互换时只交换节点组。", "可复用"],
+      ["展示层", "第一页必须先给爽点、天气、总预算、大脉络图；细节表和来源放在下面。", "爽点"],
+      ["低token层", "以后只给变更事实，例如“交换7/8和7/9”，系统输出JSON diff，不重写全篇。", "省token"]
     ];
     const prompts = [
-      ["新旅行建档","你是私人旅行策划师。只问缺失字段：国家/城市、日期、航班、酒店、签证、预算、体力偏好。输出Trip JSON，不写长文。"],
-      ["路线脉络更新","基于Trip JSON，只修改nodes/legs/days。酒店仅做base，不进nodes。输出JSON diff + 3条摘要。"],
-      ["交通核查","逐段核查legs。每段给省钱方案/省力兜底/预算人民币。不要重写景点介绍。"],
-      ["预算压缩","找出可压缩项：交通、住宿、餐饮、门票。输出表格：项目/当前/可降/代价。"],
-      ["画图指令","根据nodes和legs生成蛇形脉络图：第一排左到右，第二排右到左，主线不断，预算在连接线旁。"],
-      ["Token规则","以后只接收变更事实，不重复全量行程；输出必须是diff、风险、下一步。"]
+      ["新旅行建档", "你是私人旅行策划师。只问缺失字段：国家/城市、日期、航班、酒店、签证、预算、体力偏好。输出Trip JSON，不写长文。"],
+      ["路线脉络更新", "基于Trip JSON，只修改nodes/legs/days/highlights。酒店仅做base，不进nodes。输出JSON diff + 3条摘要。"],
+      ["交通核查", "逐段核查legs。每段给省钱方案/省力兜底/预算人民币/信息来源。不要重写景点介绍。"],
+      ["天气复核", "按日期和城市复核weather。输出：日期/城市/温度/雨雷/对行程影响/是否建议交换日期。"],
+      ["画图指令", "根据nodes和legs生成蛇形脉络图：日期标签必须清晰，节点不重叠，预算写在连接线旁，酒店只做base。"],
+      ["Token规则", "以后只接收变更事实，不重复全量行程；输出必须是diff、影响、下一步。"]
     ];
     const workflow = [
-      ["事实管理员","收集航班、酒店、签证、门票、付款截图。输出 fixedFacts。"],
-      ["路线规划师","只决定主线节点；酒店只做base，不进nodes。"],
-      ["交通核查","逐段给省钱方案、省力兜底、人民币预算和截图证据。"],
-      ["预算师","固定费用、餐饮、交通、购物分离，给控制总额。"],
-      ["可视化师","蛇形主线图、地图证据板、每日执行表。"],
-      ["应急管家","出发前24小时生成检查清单和延误替代方案。"]
+      ["事实管理员", "收集航班、酒店、签证、门票、付款截图。输出 fixedFacts。"],
+      ["路线规划师", "只决定主线节点；酒店只做base，不进nodes。"],
+      ["交通核查", "逐段给省钱方案、省力兜底、人民币预算和截图证据。"],
+      ["天气管家", "每天早上复核雨、雷、酷热，判断是否交换室内/室外行程。"],
+      ["预算师", "固定费用、餐饮、交通、购物分离，给控制总额。"],
+      ["可视化师", "蛇形主线图、地图证据板、每日执行表。"]
     ];
     const money = n => "¥" + Number(n).toLocaleString("zh-CN");
     function renderBudget() {
@@ -427,17 +541,54 @@
         ["固定已定", b.fixed], ["餐饮", b.food], ["日本交通", b.transit], ["控制总额", b.total]
       ].map(([k,v]) => `<div class="metric"><span>${k}</span><strong>${money(v)}</strong></div>`).join("");
     }
+    function renderHighlights() {
+      document.querySelector("#highlights").innerHTML = trip.highlights.map(h => `
+        <div class="highlight">
+          <b>${h[0]}</b>
+          <div><b>${h[1]}</b><br><span>${h[2]}</span></div>
+          <span class="pill good">${h[3]}</span>
+        </div>`).join("");
+    }
+    function renderWeather() {
+      document.querySelector("#weather").innerHTML = trip.weather.map(w => {
+        const cls = w[4] === "雨" || w[4] === "查" ? "warn" : "";
+        return `<article class="weather-card">
+          <b>${w[0]} ${w[1]}</b>
+          <strong>${w[2]}</strong>
+          <span>${w[3]}</span><br>
+          <span class="pill ${cls}">${w[4]}</span>
+        </article>`;
+      }).join("");
+    }
     function renderSpine() {
-      const d = "M60 175 L205 175 L350 175 L495 175 L640 175 L785 175 Q825 175 825 282 L825 390 L665 390 L545 390 L425 390 L305 390 L185 390 L60 390";
-      const nodes = trip.nodes.map(n => `<div class="node" style="left:${n[3]}px;top:${n[4]}px"><div class="dot"></div><small>${n[0]}</small><b>${n[1]}</b><small>${n[2]}</small></div>`).join("");
+      const d = "M90 190 L960 190 Q1085 190 1085 310 L1085 430 L960 430 L815 430 L670 430 L525 430 L380 430 L235 430";
+      const nodes = trip.nodes.map((n, i) => {
+        const slot = routeSlots[Math.min(i, routeSlots.length - 1)];
+        return `<div class="node" style="left:${slot[0]}px;top:${slot[1]}px">
+          <span class="date">${n[0]}</span><div class="dot"></div><b>${n[1]}</b><small>${n[2]}</small>
+        </div>`;
+      }).join("");
       const legs = trip.legs.map(l => `<div class="leg" style="left:${l[2]}px;top:${l[3]}px"><b>${l[0]}</b>${l[1]}</div>`).join("");
-      document.querySelector("#spine").innerHTML = `<svg viewBox="0 0 850 520"><path d="${d}"/></svg>${nodes}${legs}`;
+      document.querySelector("#spine").innerHTML = `<svg viewBox="0 0 1180 620" aria-hidden="true"><path class="route-path" d="${d}"/></svg>${nodes}${legs}`;
     }
     function renderBases() {
-      document.querySelector("#bases").innerHTML = trip.bases.map(b => `<div class="base"><b>${b.city}住宿基地｜不进主线</b>${b.name}<br>${b.date}｜${b.cost}元｜${b.note}</div>`).join("");
+      document.querySelector("#bases").innerHTML = trip.bases.map(b => `
+        <article class="base-card"><b>${b.city}住宿基地｜不进主线</b><br>${b.name}<br>${b.date}｜${b.cost}元｜${b.note}</article>
+      `).join("");
     }
     function renderDays() {
-      document.querySelector("#days").innerHTML = trip.days.map(d => `<div class="row"><b>${d[0]}</b><div><b>${d[1]}</b><br><span>${d[2]}</span></div><strong>${d[3]}</strong></div>`).join("");
+      document.querySelector("#days").innerHTML = trip.days.map(d => `
+        <div class="row"><b>${d[0]}</b><div><b>${d[1]}</b><br><span class="day-note">${d[2]}</span></div><strong>${d[3]}</strong></div>
+      `).join("");
+    }
+    function renderSources() {
+      document.querySelector("#sources").innerHTML = trip.sources.map(s => `
+        <article class="source-card">
+          <b>${s[0]}</b> <span class="pill ${s[2] === "需复核" || s[2] === "临近复核" ? "warn" : "good"}">${s[2]}</span><br>
+          <span>${s[1]}</span>
+          ${s[3] ? `<br><a href="${s[3]}" target="_blank" rel="noreferrer">打开来源</a>` : ""}
+        </article>
+      `).join("");
     }
     function renderMaps() {
       document.querySelector("#map-grid").innerHTML = trip.maps.map(m => `<article class="map-card"><img src="${m[2]}" alt=""><div><b>${m[0]}</b><br>${m[1]}</div></article>`).join("");
@@ -446,20 +597,31 @@
       document.querySelector("#prompts").innerHTML = prompts.map(p => `<article class="prompt"><h3>${p[0]}</h3><textarea readonly>${p[1]}</textarea><button class="secondary" data-copy="${encodeURIComponent(p[1])}">复制</button></article>`).join("");
     }
     function renderResearch() {
-      document.querySelector("#research-list").innerHTML = research.map(r => `<div class="row"><b>${r[0]}</b><div><span>${r[1]}</span></div><strong>采纳</strong></div>`).join("");
+      document.querySelector("#research-list").innerHTML = research.map(r => `<div class="row"><b>${r[0]}</b><div><span>${r[1]}</span></div><strong>${r[2]}</strong></div>`).join("");
     }
     function renderWorkflow() {
-      document.querySelector("#workflow").innerHTML = workflow.map((w, i) => `<div class="step"><b>${i + 1}. ${w[0]}</b>${w[1]}</div>`).join("");
+      const host = document.querySelector("#workflow");
+      if (host) host.innerHTML = workflow.map((w, i) => `<div class="step"><b>${i + 1}. ${w[0]}</b>${w[1]}</div>`).join("");
     }
     function renderEditor() {
       document.querySelector("#json-editor").value = JSON.stringify(trip, null, 2);
     }
-    function renderAll() {
-      renderBudget(); renderSpine(); renderBases(); renderDays(); renderMaps(); renderPrompts(); renderResearch(); renderWorkflow(); renderEditor();
+    function renderSwapControls() {
+      const opts = trip.days.map(d => `<option value="${d[0]}">${d[0]} ${d[1]}</option>`).join("");
+      const a = document.querySelector("#swap-a");
+      const b = document.querySelector("#swap-b");
+      a.innerHTML = opts;
+      b.innerHTML = opts;
+      if (trip.days[1]) a.value = trip.days[1][0];
+      if (trip.days[2]) b.value = trip.days[2][0];
     }
-    function setStatus(text) {
-      document.querySelector("#json-status").textContent = text;
-      setTimeout(() => document.querySelector("#json-status").textContent = "", 2200);
+    function renderAll() {
+      renderBudget(); renderHighlights(); renderWeather(); renderSpine(); renderBases(); renderDays(); renderSources(); renderMaps(); renderPrompts(); renderResearch(); renderWorkflow(); renderEditor(); renderSwapControls();
+    }
+    function setStatus(id, text) {
+      const el = document.querySelector(id);
+      el.textContent = text;
+      setTimeout(() => el.textContent = "", 2600);
     }
     function makeBrief() {
       const data = {
@@ -478,10 +640,39 @@
 偏好: ${data.style}
 已定: ${data.fixed}
 输出: ${data.output}
-规则: 酒店只做base不进nodes；每段交通给省钱方案/省力兜底/人民币预算；不要写长文。`;
+规则: 酒店只做base不进nodes；每段交通给省钱方案/省力兜底/人民币预算/来源；必须有highlights、weather、sources；不要写长文。`;
+    }
+    function swapDayContent(dateA, dateB) {
+      if (!dateA || !dateB || dateA === dateB) return false;
+      const idxA = trip.days.findIndex(d => d[0] === dateA);
+      const idxB = trip.days.findIndex(d => d[0] === dateB);
+      if (idxA < 0 || idxB < 0) return false;
+      const contentA = trip.days[idxA].slice(1);
+      const contentB = trip.days[idxB].slice(1);
+      trip.days[idxA] = [dateA, ...contentB];
+      trip.days[idxB] = [dateB, ...contentA];
+      trip.highlights = trip.highlights.map(h => h[0] === dateA ? [dateB, h[1], h[2], h[3]] : h[0] === dateB ? [dateA, h[1], h[2], h[3]] : h);
+      trip.highlights.sort((a, b) => trip.days.findIndex(d => d[0] === a[0]) - trip.days.findIndex(d => d[0] === b[0]));
+      const groupA = trip.nodes.filter(n => n[0] === dateA).map(n => [dateB, n[1], n[2]]);
+      const groupB = trip.nodes.filter(n => n[0] === dateB).map(n => [dateA, n[1], n[2]]);
+      const rebuilt = [];
+      let usedA = false, usedB = false;
+      trip.nodes.forEach(n => {
+        if (n[0] === dateA) {
+          if (!usedA) { rebuilt.push(...groupB); usedA = true; }
+          return;
+        }
+        if (n[0] === dateB) {
+          if (!usedB) { rebuilt.push(...groupA); usedB = true; }
+          return;
+        }
+        rebuilt.push(n);
+      });
+      trip.nodes = rebuilt;
+      return true;
     }
     function asMarkdown() {
-      return `# ${trip.name}\n\n## 主线\n${trip.nodes.map(n=>`${n[0]} ${n[1]}：${n[2]}`).join("\n")}\n\n## 预算\n固定${trip.budget.fixed}，餐饮${trip.budget.food}，交通${trip.budget.transit}，合计${trip.budget.total}`;
+      return `# ${trip.name}\n\n## 爽点\n${trip.highlights.map(h=>`${h[0]} ${h[1]}：${h[2]}`).join("\n")}\n\n## 主线\n${trip.nodes.map(n=>`${n[0]} ${n[1]}：${n[2]}`).join("\n")}\n\n## 预算\n固定${trip.budget.fixed}，餐饮${trip.budget.food}，交通${trip.budget.transit}，合计${trip.budget.total}`;
     }
     function showView(name) {
       const btn = document.querySelector(`.tab[data-view="${name}"]`) || document.querySelector(".tab");
@@ -493,30 +684,37 @@
     }
     document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => showView(btn.dataset.view)));
     document.body.addEventListener("click", async e => {
-      const txt = e.target.dataset.copy;
-      if (txt) await navigator.clipboard.writeText(decodeURIComponent(txt));
+      const copy = e.target.dataset.copy;
+      if (copy) await navigator.clipboard.writeText(decodeURIComponent(copy));
+      const jump = e.target.dataset.viewJump;
+      if (jump) showView(jump);
     });
     document.querySelector("#copy-md").onclick = () => navigator.clipboard.writeText(asMarkdown());
     document.querySelector("#copy-json").onclick = () => navigator.clipboard.writeText(JSON.stringify(trip, null, 2));
     document.querySelector("#make-brief").onclick = makeBrief;
+    document.querySelector("#swap-days").onclick = () => {
+      const ok = swapDayContent(document.querySelector("#swap-a").value, document.querySelector("#swap-b").value);
+      renderAll();
+      setStatus("#quick-status", ok ? "已交换两天行程，主线和每日表已同步" : "请选择两个不同日期");
+    };
     document.querySelector("#apply-json").onclick = () => {
       try {
         trip = JSON.parse(document.querySelector("#json-editor").value);
         renderAll();
-        setStatus("已应用到当前页面");
+        setStatus("#json-status", "已应用到当前页面");
       } catch (error) {
-        setStatus("JSON格式错误: " + error.message);
+        setStatus("#json-status", "JSON格式错误: " + error.message);
       }
     };
     document.querySelector("#save-local").onclick = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(trip));
-      setStatus("已保存到本机浏览器");
+      setStatus("#json-status", "已保存到本机浏览器");
     };
     document.querySelector("#reset-trip").onclick = () => {
       trip = clone(defaultTrip);
       localStorage.removeItem(STORAGE_KEY);
       renderAll();
-      setStatus("已恢复默认日本旅行包");
+      setStatus("#json-status", "已恢复默认日本旅行包");
     };
     renderAll();
     makeBrief();
