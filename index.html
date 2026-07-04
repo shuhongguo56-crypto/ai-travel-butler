@@ -108,7 +108,7 @@
       gap: 14px;
       margin-top: 14px;
     }
-    .highlight-list, .weather-grid, .source-grid, .base-grid, .ride-grid, .check-grid {
+    .highlight-list, .weather-grid, .source-grid, .base-grid, .ride-grid, .night-grid, .check-grid {
       display: grid;
       gap: 10px;
       padding: 14px;
@@ -123,8 +123,8 @@
       font-size: 13px;
     }
     .highlight:last-child { border-bottom: 0; padding-bottom: 0; }
-    .highlight b, .weather-card b, .source-card b, .ride-card b, .check-card b { font-size: 14px; }
-    .highlight span, .weather-card span, .source-card span, .ride-card span, .check-card span, .day-note { color: var(--muted); }
+    .highlight b, .weather-card b, .source-card b, .ride-card b, .night-card b, .check-card b { font-size: 14px; }
+    .highlight span, .weather-card span, .source-card span, .ride-card span, .night-card span, .check-card span, .day-note { color: var(--muted); }
     .pill {
       display: inline-flex;
       align-items: center;
@@ -141,7 +141,7 @@
     .pill.good { border-color: color-mix(in oklch, var(--green) 35%, var(--line)); color: var(--green); }
     .pill.warn { border-color: color-mix(in oklch, var(--amber) 45%, var(--line)); color: var(--amber); }
     .weather-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .weather-card, .source-card, .base-card, .ride-card, .check-card, .step {
+    .weather-card, .source-card, .base-card, .ride-card, .night-card, .check-card, .step {
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 11px;
@@ -152,6 +152,8 @@
     .weather-card strong { display: block; margin: 5px 0 4px; font-size: 18px; }
     .ride-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .ride-card strong { display: block; margin: 7px 0 4px; font-size: 20px; }
+    .night-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .night-card strong { display: block; margin: 7px 0 4px; font-size: 19px; }
     .fare-line { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .spine-wrap {
       margin-top: 14px;
@@ -296,7 +298,7 @@
       .budget { grid-template-columns: 1fr 1fr; }
       .metric:nth-child(2) { border-right: 0; }
       .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
-      .weather-grid, .source-grid, .base-grid, .ride-grid, .check-grid, .map-grid, .prompt-grid, .workflow, .form-grid, .tool-grid { grid-template-columns: 1fr; }
+      .weather-grid, .source-grid, .base-grid, .ride-grid, .night-grid, .check-grid, .map-grid, .prompt-grid, .workflow, .form-grid, .tool-grid { grid-template-columns: 1fr; }
       .spine { width: 1040px; }
     }
   </style>
@@ -349,6 +351,11 @@
       <section class="panel" style="margin-top:14px">
         <div class="panel-head"><div><h2>打车兜底预算</h2><div class="hint">按Uber/NAVITIME/Rome2rio公开估算；人民币按 1 JPY≈0.042 CNY 估算</div></div></div>
         <div class="ride-grid" id="rides"></div>
+      </section>
+
+      <section class="panel" style="margin-top:14px">
+        <div class="panel-head"><div><h2>每天晚上回酒店</h2><div class="hint">白天能坐地铁；晚上累了就按这里的打车预算兜底</div></div></div>
+        <div class="night-grid" id="night-returns"></div>
       </section>
 
       <div class="bottom-grid">
@@ -509,6 +516,15 @@
         ["大阪酒店⇄USJ（往返）", "按你酒店定位：1-10-4 Hanazonocho；早上去USJ，晚上回酒店，费用已含来回", "Rome2rio Hanazonochō→USJ taxi ¥4,100-4,900/单程；这里按往返×2", "¥8,200-9,800", "约344-412元", "只有赶开园/回程累崩才打；默认JR往返", "https://www.rome2rio.com/s/Hanazonoch%C5%8D-eki/Universal-Studios-Japan"],
         ["大阪酒店→关西机场（单程）", "返程兜底，不建议默认打车", "Uber Osaka→KIX均价约¥23,010；NAVITIME大阪站→KIX约¥18,700", "¥18,000-23,000", "约756-966元", "默认南海急行；只在误点/暴雨/行李崩溃时用", "https://www.uber.com/global/en/r/routes/osaka-osaka-jp-to-kix/"]
       ],
+      nightReturns: [
+        ["7/7", "羽田T2→东京酒店", "落地后直接回酒店；地铁还能走，但你累就打", "¥10,000-12,500", "约420-525元", "第一晚最值得花钱省力"],
+        ["7/8", "银座/日本桥→东京酒店", "短程回KOKO，地铁/步行都行；下雨或腿酸打", "¥2,100-2,600", "约88-109元", "短程可打，性价比还行"],
+        ["7/9", "涩谷夜景→东京酒店", "夜景结束后最容易累；若22点后按夜间上浮留预算", "¥6,000-7,800", "约252-328元", "这晚建议预留打车钱"],
+        ["7/10", "难波/道顿堀→大阪酒店", "如果抵达大阪后去吃饭逛街，夜里回花园町", "¥2,000-3,000", "约84-126元", "近距离，累了就打"],
+        ["7/11", "USJ→大阪酒店", "这里只算晚上回程；若早上也打车，看USJ往返卡", "¥4,100-4,900", "约172-206元", "USJ后最可能用到"],
+        ["7/12", "心斋桥/道顿堀→大阪酒店", "最后购物夜，带东西回酒店", "¥2,000-3,000", "约84-126元", "购物多就打"],
+        ["合计", "只算夜归打车", "每天晚上都打车回酒店的保守预算", "¥26,200-33,800", "约1,100-1,420元", "如果USJ早上也打车，总额再加约172-206元"]
+      ],
       sources: [
         ["机票", "去程NH966、返程HB341、香港船票来自你的携程截图；ANA官方航班状态需起飞前2天复核。", "已出票", "https://www.ana.co.jp/fs/int/en/"],
         ["酒店", "东京KOKO 2000元；大阪川House 787.01元；均来自你的订单截图。", "已付款", ""],
@@ -655,6 +671,18 @@
         </article>
       `).join("");
     }
+    function renderNightReturns() {
+      const returns = trip.nightReturns || defaultTrip.nightReturns;
+      document.querySelector("#night-returns").innerHTML = returns.map(r => `
+        <article class="night-card">
+          <b>${r[0]} ${r[1]}</b><br>
+          <span>${r[2]}</span>
+          <strong>${r[4]}</strong>
+          <div>${r[3]}</div>
+          <div class="fare-line"><span class="pill warn">夜归兜底</span><span class="pill">${r[5]}</span></div>
+        </article>
+      `).join("");
+    }
     function renderSources() {
       document.querySelector("#sources").innerHTML = trip.sources.map(s => `
         <article class="source-card">
@@ -699,7 +727,7 @@
       if (trip.days[2]) b.value = trip.days[2][0];
     }
     function renderAll() {
-      renderBudget(); renderHighlights(); renderWeather(); renderSpine(); renderBases(); renderDays(); renderRides(); renderSources(); renderMaps(); renderPrompts(); renderResearch(); renderChecklist(); renderWorkflow(); renderEditor(); renderSwapControls();
+      renderBudget(); renderHighlights(); renderWeather(); renderSpine(); renderBases(); renderDays(); renderRides(); renderNightReturns(); renderSources(); renderMaps(); renderPrompts(); renderResearch(); renderChecklist(); renderWorkflow(); renderEditor(); renderSwapControls();
     }
     function setStatus(id, text) {
       const el = document.querySelector(id);
@@ -756,8 +784,9 @@
     }
     function asMarkdown() {
       const rideText = (trip.rides || defaultTrip.rides).map(r=>`${r[0]}：${r[3]} / ${r[4]}，${r[5]}`).join("\n");
+      const nightText = (trip.nightReturns || defaultTrip.nightReturns).map(r=>`${r[0]} ${r[1]}：${r[3]} / ${r[4]}，${r[5]}`).join("\n");
       const checkText = (trip.checklist || defaultTrip.checklist).map(s=>`### ${s[0]}\n${s[1].map(i=>`- ${i[0]}：${i[1]}`).join("\n")}`).join("\n");
-      return `# ${trip.name}\n\n## 爽点\n${trip.highlights.map(h=>`${h[0]} ${h[1]}：${h[2]}`).join("\n")}\n\n## 主线\n${trip.nodes.map(n=>`${n[0]} ${n[1]}：${n[2]}`).join("\n")}\n\n## 打车兜底\n${rideText}\n\n## 清单\n${checkText}\n\n## 预算\n固定${trip.budget.fixed}，餐饮${trip.budget.food}，交通${trip.budget.transit}，合计${trip.budget.total}`;
+      return `# ${trip.name}\n\n## 爽点\n${trip.highlights.map(h=>`${h[0]} ${h[1]}：${h[2]}`).join("\n")}\n\n## 主线\n${trip.nodes.map(n=>`${n[0]} ${n[1]}：${n[2]}`).join("\n")}\n\n## 打车兜底\n${rideText}\n\n## 每天晚上回酒店\n${nightText}\n\n## 清单\n${checkText}\n\n## 预算\n固定${trip.budget.fixed}，餐饮${trip.budget.food}，交通${trip.budget.transit}，合计${trip.budget.total}`;
     }
     function showView(name) {
       const btn = document.querySelector(`.tab[data-view="${name}"]`) || document.querySelector(".tab");
