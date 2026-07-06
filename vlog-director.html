@@ -232,6 +232,45 @@
       gap: 8px;
     }
     .flow .step { min-height: 110px; }
+    .tree {
+      margin: 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: color-mix(in oklch, var(--paper) 72%, white);
+      color: var(--ink);
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .command {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: color-mix(in oklch, var(--blue) 10%, white);
+    }
+    .command code {
+      font: 12px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+      overflow-wrap: anywhere;
+    }
+    .folder-day {
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr);
+      gap: 9px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: var(--surface);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .folder-day b { font-size: 13px; }
+    .folder-day span { color: var(--muted); }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
     th { color: var(--muted); background: color-mix(in oklch, var(--blue) 11%, white); font-weight: 850; }
@@ -245,6 +284,8 @@
       .metric:nth-child(2) { border-right: 0; }
       .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
       .shot { grid-template-columns: 58px minmax(0, 1fr); }
+      .command { grid-template-columns: 1fr; }
+      .folder-day { grid-template-columns: 64px minmax(0, 1fr); }
       table, thead, tbody, tr, td, th { display: block; }
       thead { display: none; }
       tr { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; overflow: hidden; background: var(--surface); }
@@ -268,6 +309,7 @@
       <div class="hero-actions">
         <button class="primary" data-jump="today">进入每日拍摄</button>
         <button data-jump="prep">出发前准备</button>
+        <button data-jump="storage">素材库</button>
         <button data-jump="edit">剪辑框架</button>
       </div>
     </header>
@@ -277,6 +319,7 @@
       <button class="tab" data-jump="prep">出发前</button>
       <button class="tab" data-jump="kit">设备分工</button>
       <button class="tab" data-jump="today">每日执行</button>
+      <button class="tab" data-jump="storage">素材库</button>
       <button class="tab" data-jump="edit">剪辑闭环</button>
       <button class="tab" data-jump="sources">依据</button>
       <a class="tab" href="./index.html">回行程系统</a>
@@ -287,7 +330,7 @@
         <div class="metric"><span>长视频目标</span><b>8-12 分钟</b></div>
         <div class="metric"><span>短视频目标</span><b>30-60 秒</b></div>
         <div class="metric"><span>每日素材量</span><b>横 40-60 / 竖 15-25</b></div>
-        <div class="metric"><span>每天收工</span><b>15 分钟闭环</b></div>
+        <div class="metric"><span>每天收工</span><b>导入 + 校验 + 精选</b></div>
       </div>
 
       <div class="grid two">
@@ -402,6 +445,69 @@
       </section>
     </section>
 
+    <section id="storage" class="panel" style="margin-top:14px">
+      <div class="panel-head"><div><h2>每日素材库</h2><div class="hint">借鉴开源 DAM / 备份工具思路：本地文件夹为主，标签和校验辅助，旅行中不搞复杂系统</div></div><span class="badge blue">先复制，再校验</span></div>
+      <div class="body grid two">
+        <div class="grid" style="gap:10px">
+          <div class="mini-card director-note"><strong>素材根目录建议</strong><p>把这趟所有素材统一放在 <b>D:\Japan2026_Vlog</b>。每天只看当天文件夹，不要把相机、手机、Action 的素材混在一个大目录里。</p></div>
+          <pre class="tree">D:\Japan2026_Vlog
+├─00_ADMIN              行程、票据截图、拍摄日志、授权备注
+├─01_FOOTAGE            所有原始视频，按天和设备分开
+│  ├─D01_0707_SZ-Tokyo
+│  │  ├─A_CAM_A7M4
+│  │  ├─B_CAM_ACTION5
+│  │  ├─C_PHONE_IPHONE15PM
+│  │  ├─D_PHONE_VIVO
+│  │  ├─AUDIO_NOTES
+│  │  └─SELECTS
+│  └─D02...D07 同结构
+├─02_PHOTOS             JPG/RAW/封面候选
+├─03_AUDIO              口播、环境声、音乐候选
+├─04_PROJECT            剪映/达芬奇/PR/FCP 项目文件
+├─05_EXPORTS            长视频、短视频、封面、字幕
+└─06_CHECKSUMS          每天 SHA256 校验表</pre>
+          <div class="command">
+            <code id="folder-command">powershell -ExecutionPolicy Bypass -File .\tools\create-vlog-folders.ps1 -Root "D:\Japan2026_Vlog"</code>
+            <button data-copy="#folder-command">复制建目录命令</button>
+          </div>
+          <div class="command">
+            <code id="checksum-command">powershell -ExecutionPolicy Bypass -File .\tools\write-vlog-checksums.ps1 -Root "D:\Japan2026_Vlog" -Day "D05_0711_USJ"</code>
+            <button data-copy="#checksum-command">复制校验命令</button>
+          </div>
+          <div class="mini-card"><strong>怎么使用脚本</strong><p>如果你在本地仓库里运行，直接复制上面的命令。如果只打开网页，把 <a href="./tools/create-vlog-folders.ps1" download>create-vlog-folders.ps1</a> 和 <a href="./tools/write-vlog-checksums.ps1" download>write-vlog-checksums.ps1</a> 下载到同一个文件夹后运行。</p></div>
+        </div>
+
+        <div class="grid" style="gap:10px">
+          <h3>每天文件夹怎么放</h3>
+          <div class="grid" id="folder-days"></div>
+          <div class="mini-card">
+            <strong>命名规则</strong>
+            <p>原始文件先不改名，避免破坏相机连续编号。只靠文件夹管理：<b>D05_0711_USJ / B_CAM_ACTION5</b>。精选片再复制到 SELECTS，可重命名为 <b>D05_USJ_entrance_action_001.mp4</b>。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="body grid three" style="border-top:1px solid var(--line)">
+        <article class="step"><strong>1. 导入</strong><p>回酒店后先把 A7M4 SD 卡、Action、iPhone、vivo 分别复制进当天设备目录。复制完不要立刻格式化卡。</p></article>
+        <article class="step"><strong>2. 校验</strong><p>跑一次 SHA256 校验表，或至少对当天目录生成 CSV。确认文件数、大小、打开预览都正常。</p></article>
+        <article class="step"><strong>3. 精选</strong><p>当天只挑 20 条进 SELECTS。不要剪片，只做选择；给未来剪辑师的自己省命。</p></article>
+        <article class="step"><strong>4. 备份</strong><p>把当天目录复制到第二块盘/云盘。备份完成前，原卡和手机素材都保留。</p></article>
+        <article class="step"><strong>5. 日志</strong><p>在 00_ADMIN\shoot_log.csv 记：日期、地点、设备、素材是否备份、今日最强镜头。</p></article>
+        <article class="step"><strong>6. 清卡</strong><p>只有“主盘 + 备份 + 校验表”都完成，第二天早上再清卡。晚上困的时候不清卡。</p></article>
+      </div>
+
+      <div class="body grid two" style="border-top:1px solid var(--line)">
+        <div class="mini-card">
+          <strong>可接入的开源工具思路</strong>
+          <p><b>TagSpaces</b>：后期用本地标签管理 SELECTS；<b>ExifTool</b>：需要时读取相机/手机元数据；<b>rclone</b>：把当天目录同步到云盘；<b>restic</b>：长期做加密、去重、可校验备份。旅行中先用轻量文件夹，回家再升级。</p>
+        </div>
+        <div class="mini-card director-note">
+          <strong>我的导师要求</strong>
+          <p>每天只要完成三个动作：<b>导入当天文件夹、挑 SELECTS、生成校验/备份记录</b>。你可以累，可以不剪，但不能让素材散在四台设备里过夜。</p>
+        </div>
+      </div>
+    </section>
+
     <section id="edit" class="panel" style="margin-top:14px">
       <div class="panel-head"><div><h2>长短视频剪辑闭环</h2><div class="hint">拍摄时就按剪辑结构收素材，回来不用从零整理</div></div></div>
       <div class="body grid two">
@@ -436,7 +542,8 @@
       <div class="panel-head"><div><h2>设备依据与拍摄备注</h2><div class="hint">设备能力来自官方/公开规格，现场规则以景点当天提示为准</div></div></div>
       <div class="body sources">
         <p>Sony A7M4：官方规格显示支持 4K 10-bit 4:2:2 等视频记录格式；4K60 在 Super 35/裁切工作流中使用更合理。iPhone 15 Pro Max：Apple 官方规格支持 4K、HDR、ProRes、Log，4K60 ProRes 需要外接兼容存储。DJI Action 5 Pro：官方规格支持 4K 高帧率和防水运动拍摄。vivo/iQOO 机型因地区页面信息不完全，页面中只把它定位为后勤备机。</p>
-        <p>来源：<a href="https://www.sony.com/electronics/support/e-mount-body-ilce-7-series/ilce-7m4/specifications" target="_blank" rel="noreferrer">Sony A7M4 规格</a> · <a href="https://support.apple.com/en-us/111828" target="_blank" rel="noreferrer">Apple iPhone 15 Pro Max 规格</a> · <a href="https://support.apple.com/en-us/109041" target="_blank" rel="noreferrer">Apple ProRes 说明</a> · <a href="https://www.dji.com/osmo-action-5-pro/specs" target="_blank" rel="noreferrer">DJI Osmo Action 5 Pro 规格</a></p>
+        <p>素材管理思路：TagSpaces 提供本地文件标签和预览；ExifTool 可读取/写入照片视频元数据；rclone 可同步到云存储；restic 可做加密、去重、可校验备份。本手册只采用它们的轻量思想：文件夹、标签、校验、备份。</p>
+        <p>来源：<a href="https://www.sony.com/electronics/support/e-mount-body-ilce-7-series/ilce-7m4/specifications" target="_blank" rel="noreferrer">Sony A7M4 规格</a> · <a href="https://support.apple.com/en-us/111828" target="_blank" rel="noreferrer">Apple iPhone 15 Pro Max 规格</a> · <a href="https://support.apple.com/en-us/109041" target="_blank" rel="noreferrer">Apple ProRes 说明</a> · <a href="https://www.dji.com/osmo-action-5-pro/specs" target="_blank" rel="noreferrer">DJI Osmo Action 5 Pro 规格</a> · <a href="https://github.com/tagspaces/tagspaces" target="_blank" rel="noreferrer">TagSpaces</a> · <a href="https://github.com/exiftool/exiftool" target="_blank" rel="noreferrer">ExifTool</a> · <a href="https://github.com/rclone/rclone" target="_blank" rel="noreferrer">rclone</a> · <a href="https://github.com/restic/restic" target="_blank" rel="noreferrer">restic</a></p>
       </div>
     </section>
   </main>
@@ -549,6 +656,15 @@
         ]
       }
     ];
+    const storageDays = [
+      ["D01", "0707 深圳-东京", "出发、ANA、羽田、酒店"],
+      ["D02", "0708 东京光影", "teamLab、银座、日本桥"],
+      ["D03", "0709 浅草-涩谷", "浅草、涩谷夜景"],
+      ["D04", "0710 东京-大阪", "东京站、新干线、难波"],
+      ["D05", "0711 USJ", "Action 和 iPhone 为主"],
+      ["D06", "0712 大阪街区", "难波、心斋桥、道顿堀"],
+      ["D07", "0713 回程", "关西机场、香港、蛇口"]
+    ];
 
     const dayList = document.querySelector("#day-list");
     const dayTitle = document.querySelector("#day-title");
@@ -583,12 +699,26 @@
       document.querySelector("#today").scrollIntoView({ block: "start" });
     });
     renderDay(0);
+    document.querySelector("#folder-days").innerHTML = storageDays.map(d => `
+      <article class="folder-day">
+        <b>${d[0]}</b>
+        <div><strong>${d[1]}</strong><br><span>${d[2]}</span></div>
+      </article>
+    `).join("");
 
     document.body.addEventListener("click", e => {
       const jump = e.target.dataset.jump;
-      if (!jump) return;
-      document.getElementById(jump)?.scrollIntoView({ block: "start" });
-      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.jump === jump));
+      const copy = e.target.dataset.copy;
+      if (copy) {
+        const text = document.querySelector(copy)?.textContent || "";
+        navigator.clipboard?.writeText(text);
+        e.target.textContent = "已复制";
+        setTimeout(() => { e.target.textContent = copy.includes("checksum") ? "复制校验命令" : "复制建目录命令"; }, 1200);
+      }
+      if (jump) {
+        document.getElementById(jump)?.scrollIntoView({ block: "start" });
+        document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.jump === jump));
+      }
     });
 
     const storeKey = "japan-vlog-director-checks-v1";
