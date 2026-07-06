@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>日本 Vlog 导演手册</title>
+  <link rel="icon" href="data:," />
+  <style>
+    :root {
+      --bg: oklch(0.965 0.018 232);
+      --surface: oklch(1 0 0);
+      --paper: oklch(0.985 0.01 70);
+      --soft: oklch(0.955 0.026 13);
+      --blue: oklch(0.62 0.12 215);
+      --red: oklch(0.58 0.18 28);
+      --pink: oklch(0.78 0.11 354);
+      --gold: oklch(0.78 0.12 88);
+      --green: oklch(0.5 0.12 154);
+      --ink: oklch(0.21 0.048 258);
+      --muted: oklch(0.42 0.04 252);
+      --line: oklch(0.86 0.025 236);
+      --shadow: oklch(0.34 0.05 250 / .12);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, oklch(0.95 0.034 215) 0, var(--bg) 310px),
+        var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+    }
+    a { color: color-mix(in oklch, var(--red) 82%, var(--ink)); font-weight: 700; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; }
+    h1 { font-size: 34px; }
+    h2 { font-size: 20px; }
+    h3 { font-size: 16px; }
+    p { margin: 0; }
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--ink);
+      background: var(--surface);
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    button.primary {
+      color: #fff;
+      border-color: color-mix(in oklch, var(--red) 72%, var(--ink));
+      background: linear-gradient(180deg, color-mix(in oklch, var(--red) 88%, white), var(--red));
+      box-shadow: 0 3px 8px var(--shadow);
+    }
+    button:hover { transform: translateY(-1px); filter: brightness(1.02); }
+    .app { max-width: 1360px; margin: 0 auto; padding: 18px; }
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+      gap: 18px;
+      align-items: end;
+      padding: 20px;
+      border: 1px solid color-mix(in oklch, var(--line) 84%, white);
+      border-radius: 14px;
+      background:
+        linear-gradient(135deg, var(--surface) 0 56%, oklch(0.956 0.028 205) 56% 100%);
+      box-shadow: 0 4px 8px var(--shadow);
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "导演";
+      position: absolute;
+      right: 26px;
+      top: 18px;
+      width: 64px;
+      height: 64px;
+      display: grid;
+      place-items: center;
+      border: 2px solid color-mix(in oklch, var(--red) 75%, white);
+      border-radius: 50%;
+      color: color-mix(in oklch, var(--red) 86%, var(--ink));
+      font-weight: 900;
+      opacity: .18;
+      transform: rotate(-8deg);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--red), var(--pink), var(--blue), var(--gold));
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .kicker { margin-bottom: 8px; color: color-mix(in oklch, var(--red) 78%, var(--ink)); font-size: 12px; font-weight: 850; }
+    .sub { margin-top: 9px; color: var(--muted); font-size: 14px; line-height: 1.55; max-width: 72ch; }
+    .hero-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 12px 0;
+      background: color-mix(in oklch, var(--bg) 90%, transparent);
+      backdrop-filter: blur(10px);
+    }
+    .tab { white-space: nowrap; }
+    .tab.active { color: #fff; background: var(--ink); border-color: var(--ink); }
+    .grid { display: grid; gap: 14px; }
+    .two { grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); }
+    .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: 0 3px 8px var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 15px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(90deg, color-mix(in oklch, var(--blue) 13%, white), white 64%);
+    }
+    .panel-head h2::before {
+      content: "";
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      margin-right: 8px;
+      border-radius: 2px;
+      background: var(--red);
+      transform: rotate(45deg);
+      vertical-align: 1px;
+    }
+    .hint { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .body { padding: 14px; }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: 0 3px 8px var(--shadow);
+    }
+    .metric {
+      position: relative;
+      padding: 14px;
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, color-mix(in oklch, var(--surface) 88%, oklch(0.94 0.03 203)), var(--surface));
+    }
+    .metric:last-child { border-right: 0; }
+    .metric::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--pink); }
+    .metric:nth-child(2)::before { background: var(--blue); }
+    .metric:nth-child(3)::before { background: var(--gold); }
+    .metric:nth-child(4)::before { background: var(--red); }
+    .metric span { display: block; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .metric b { display: block; margin-top: 5px; font-size: 20px; }
+    .role-card, .day-card, .shot, .step, .mini-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 11px;
+      line-height: 1.48;
+      font-size: 13px;
+    }
+    .role-card strong, .day-card strong, .shot strong, .step strong, .mini-card strong { font-size: 14px; }
+    .role-card p, .day-card p, .shot p, .step p, .mini-card p { margin-top: 5px; color: var(--muted); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: color-mix(in oklch, var(--soft) 70%, white);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .badge.blue { background: color-mix(in oklch, var(--blue) 14%, white); }
+    .badge.red { color: color-mix(in oklch, var(--red) 82%, var(--ink)); background: color-mix(in oklch, var(--soft) 78%, white); }
+    .badge.gold { background: color-mix(in oklch, var(--gold) 22%, white); }
+    .badge.green { color: var(--green); background: color-mix(in oklch, var(--green) 12%, white); }
+    .role-head { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .list { display: grid; gap: 8px; }
+    .check {
+      display: grid;
+      grid-template-columns: 20px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: color-mix(in oklch, var(--surface) 88%, var(--paper));
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .check input { margin-top: 2px; accent-color: var(--red); }
+    .done { text-decoration: line-through; color: var(--muted); }
+    .day-card {
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+    .day-card:hover { transform: translateY(-1px); border-color: color-mix(in oklch, var(--pink) 55%, var(--line)); background: color-mix(in oklch, var(--soft) 45%, white); }
+    .day-card.active { border-color: color-mix(in oklch, var(--red) 62%, var(--line)); background: color-mix(in oklch, var(--soft) 58%, white); }
+    .day-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .detail-grid { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 14px; }
+    .timeline { position: relative; display: grid; gap: 10px; padding-left: 18px; }
+    .timeline::before { content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 3px; border-radius: 4px; background: linear-gradient(var(--red), var(--pink), var(--blue)); }
+    .timeline .step { position: relative; }
+    .timeline .step::before { content: ""; position: absolute; left: -17px; top: 15px; width: 12px; height: 12px; border: 3px solid #fff; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 1px var(--red); }
+    .shot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .shot { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 9px; align-items: start; }
+    .shot .lens { color: var(--muted); font-size: 12px; font-weight: 800; }
+    .director-note { border-color: color-mix(in oklch, var(--gold) 60%, var(--line)); background: color-mix(in oklch, var(--gold) 17%, white); }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .flow .step { min-height: 110px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); background: color-mix(in oklch, var(--blue) 11%, white); font-weight: 850; }
+    .sources { color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .hidden { display: none; }
+    @media (max-width: 900px) {
+      .app { padding: 12px; }
+      .hero, .two, .three, .detail-grid, .shot-grid, .flow { grid-template-columns: 1fr; }
+      .hero-actions { justify-content: flex-start; }
+      .metrics { grid-template-columns: 1fr 1fr; }
+      .metric:nth-child(2) { border-right: 0; }
+      .metric:nth-child(n+3) { border-top: 1px solid var(--line); }
+      .shot { grid-template-columns: 58px minmax(0, 1fr); }
+      table, thead, tbody, tr, td, th { display: block; }
+      thead { display: none; }
+      tr { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; overflow: hidden; background: var(--surface); }
+      td { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; border-bottom: 1px solid var(--line); }
+      td::before { content: attr(data-label); color: var(--muted); font-size: 12px; font-weight: 800; }
+      td:last-child { border-bottom: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div>
+        <div class="kicker">Japan 2026 Vlog Director System</div>
+        <h1>日本旅程 Vlog 导演手册</h1>
+        <p class="sub">你是执行者，我是导演导师。页面把设备分工、每天拍什么、晚上怎么收工、最后怎么剪成长短视频全部闭环。当天只需要打开对应 Day，按清单拍，不临场乱想。</p>
+      </div>
+      <div class="hero-actions">
+        <button class="primary" data-jump="today">进入每日拍摄</button>
+        <button data-jump="prep">出发前准备</button>
+        <button data-jump="edit">剪辑框架</button>
+      </div>
+    </header>
+
+    <nav class="nav" aria-label="页面导航">
+      <button class="tab active" data-jump="control">总控</button>
+      <button class="tab" data-jump="prep">出发前</button>
+      <button class="tab" data-jump="kit">设备分工</button>
+      <button class="tab" data-jump="today">每日执行</button>
+      <button class="tab" data-jump="edit">剪辑闭环</button>
+      <button class="tab" data-jump="sources">依据</button>
+      <a class="tab" href="./index.html">回行程系统</a>
+    </nav>
+
+    <section id="control" class="grid" style="margin-top:4px">
+      <div class="metrics">
+        <div class="metric"><span>长视频目标</span><b>8-12 分钟</b></div>
+        <div class="metric"><span>短视频目标</span><b>30-60 秒</b></div>
+        <div class="metric"><span>每日素材量</span><b>横 40-60 / 竖 15-25</b></div>
+        <div class="metric"><span>每天收工</span><b>15 分钟闭环</b></div>
+      </div>
+
+      <div class="grid two">
+        <section class="panel">
+          <div class="panel-head"><div><h2>导演原则</h2><div class="hint">整趟片子的气质，不拍成流水账</div></div></div>
+          <div class="body list">
+            <div class="mini-card director-note"><strong>主线</strong><p>从深圳出发，用最省心的方式完成东京到大阪。画面要有“累但值得”的真实感。</p></div>
+            <div class="mini-card"><strong>节奏</strong><p>每个地点先拍地标，再拍人物，再拍细节。每条镜头 5-8 秒，重要画面横竖各一条。</p></div>
+            <div class="mini-card"><strong>省力策略</strong><p>不要每天全套设备出门。USJ 只带 Action + iPhone；城市日 A7M4 做主画面；vivo 做导航、备份和语音笔记。</p></div>
+            <div class="mini-card"><strong>底线</strong><p>禁止为了拍摄拖垮旅行。景点体验优先，拍摄只服务回忆和成片。</p></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><div><h2>一地点六镜头</h2><div class="hint">到任何地点都按这个顺序拍</div></div></div>
+          <div class="body flow">
+            <div class="step"><strong>地标</strong><p>站牌、招牌、入口。证明你在哪。</p></div>
+            <div class="step"><strong>环境</strong><p>广角稳定 5 秒，给空间感。</p></div>
+            <div class="step"><strong>人物</strong><p>你走进画面或背影停留。</p></div>
+            <div class="step"><strong>动作</strong><p>刷卡、拿票、开门、付款、夹食物。</p></div>
+            <div class="step"><strong>情绪</strong><p>笑、累、发呆、看窗外，不要假演。</p></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="prep" class="panel" style="margin-top:14px">
+      <div class="panel-head"><div><h2>出发前总准备</h2><div class="hint">7月7日出发前，把拍摄系统调成可执行状态</div></div><span class="badge green" id="progress">0 已完成</span></div>
+      <div class="body grid three">
+        <div>
+          <h3>相机设置</h3>
+          <div class="list checklist">
+            <label class="check"><input type="checkbox" data-task="sony-setup"><span>A7M4：主拍 4K 30p，S-Cinetone/标准色彩，快门 1/60；慢动作改 4K 60p。</span></label>
+            <label class="check"><input type="checkbox" data-task="iphone-setup"><span>iPhone：默认 4K 30p SDR；只在特别想调色的英雄镜头开 ProRes Log，最好接外置存储。</span></label>
+            <label class="check"><input type="checkbox" data-task="action-setup"><span>Action 5 Pro：4K 30p/60p，稳定增强；POV、雨天、USJ、车窗素材优先。</span></label>
+            <label class="check"><input type="checkbox" data-task="vivo-setup"><span>vivo：做导航机、备机、语音备忘录；不要把它当主画面。</span></label>
+          </div>
+        </div>
+        <div>
+          <h3>收纳与续航</h3>
+          <div class="list checklist">
+            <label class="check"><input type="checkbox" data-task="cards"><span>准备两张以上高速 SD 卡；每天一张主卡，避免全部素材压在一张卡。</span></label>
+            <label class="check"><input type="checkbox" data-task="power"><span>相机电池、手机充电宝、Action 电池全部贴标签；每天早上满电出门。</span></label>
+            <label class="check"><input type="checkbox" data-task="bag"><span>城市日：A7M4 + iPhone + vivo；乐园日：Action + iPhone + vivo；三脚架只在酒店/安全空旷处用。</span></label>
+            <label class="check"><input type="checkbox" data-task="storage"><span>建好素材文件夹：D1 出发、D2 东京光影、D3 浅草涩谷、D4 新干线、D5 USJ、D6 大阪、D7 回程。</span></label>
+          </div>
+        </div>
+        <div>
+          <h3>拍摄纪律</h3>
+          <div class="list checklist">
+            <label class="check"><input type="checkbox" data-task="no-shake"><span>不要边走边乱晃。要么停下来拍，要么用 Action/iPhone 稳定模式。</span></label>
+            <label class="check"><input type="checkbox" data-task="self"><span>每天至少 3 条自己出镜：背影、看城市、睡前总结。</span></label>
+            <label class="check"><input type="checkbox" data-task="audio"><span>每天录 1 条 30 秒语音总结：最值、最累、花费、明天调整。</span></label>
+            <label class="check"><input type="checkbox" data-task="respect"><span>店内、车站、园区、展馆遵守现场规则；不要怼拍陌生人。</span></label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="kit" class="panel" style="margin-top:14px">
+      <div class="panel-head"><div><h2>设备分工</h2><div class="hint">不用每台设备都抢活，分清主机、运动机、竖屏机、后勤机</div></div></div>
+      <div class="body grid three">
+        <article class="role-card">
+          <div class="role-head"><strong>Sony A7M4 + 20-70</strong><span class="badge red">电影主机</span></div>
+          <p>负责高质感横屏、夜景、人像背影、城市空镜、餐厅食物、酒店 talking head。白天 20mm 建立空间，35-70mm 拍压缩感和人物。</p>
+          <p><b>默认：</b>4K30，快门 1/60；需要慢动作时 4K60。旅行省心优先用 S-Cinetone/标准色彩，不强制 S-Log。</p>
+        </article>
+        <article class="role-card">
+          <div class="role-head"><strong>Action 5 Pro</strong><span class="badge blue">POV/运动机</span></div>
+          <p>负责拖箱、地铁、雨天、USJ、人流、车窗、第一视角。别追求虚化，它负责“临场”。</p>
+          <p><b>默认：</b>4K30/60 + 稳定。USJ 和移动日把它挂在手上，捕捉你无法架相机的瞬间。</p>
+        </article>
+        <article class="role-card">
+          <div class="role-head"><strong>iPhone 15 Pro Max</strong><span class="badge gold">竖屏/应急机</span></div>
+          <p>负责短视频竖屏、夜晚快速反应、自拍总结、临时采访。想做高质量英雄镜头，可用 ProRes Log，但只拍少量重点。</p>
+          <p><b>默认：</b>4K30 SDR；重要竖屏用 4K30，运动用 Action mode。</p>
+        </article>
+        <article class="role-card">
+          <div class="role-head"><strong>vivo iQOO Z9 Turbo+</strong><span class="badge green">后勤备机</span></div>
+          <p>负责导航、预算网页、翻译、查路线、语音备忘录、备用竖屏。它不是主摄影机，但保证你不迷路、不断电、不忘词。</p>
+          <p><b>默认：</b>导航与备份优先，避免和主机争镜头。</p>
+        </article>
+        <article class="role-card">
+          <div class="role-head"><strong>2m 三脚架</strong><span class="badge">静态导师机位</span></div>
+          <p>负责酒店开场、房间收尾、出门背影、战利品俯拍、睡前总结。公共区域少用，车站/展馆/园区看规则。</p>
+          <p><b>默认：</b>只在不挡路、不影响别人、不违规时展开。</p>
+        </article>
+        <article class="role-card director-note">
+          <div class="role-head"><strong>今日出门公式</strong><span class="badge red">省力优先</span></div>
+          <p>城市日：A7M4 + iPhone + vivo。移动日：A7M4 少拍、Action 多拍。USJ：Action + iPhone，A7M4 留酒店。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="today" class="grid two" style="margin-top:14px">
+      <section class="panel">
+        <div class="panel-head"><div><h2>每日导演卡</h2><div class="hint">点选当天，右侧自动显示镜头表</div></div></div>
+        <div class="body grid" id="day-list"></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><div><h2 id="day-title">Day 1｜深圳到东京</h2><div class="hint" id="day-hint">当天的情绪、设备和镜头任务</div></div></div>
+        <div class="body detail-grid">
+          <aside class="timeline" id="day-timeline"></aside>
+          <div>
+            <div class="grid" style="gap:10px">
+              <div class="mini-card director-note"><strong>导演口令</strong><p id="director-line"></p></div>
+              <div class="shot-grid" id="shot-grid"></div>
+              <div class="mini-card"><strong>晚上 15 分钟闭环</strong><p id="night-close"></p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section id="edit" class="panel" style="margin-top:14px">
+      <div class="panel-head"><div><h2>长短视频剪辑闭环</h2><div class="hint">拍摄时就按剪辑结构收素材，回来不用从零整理</div></div></div>
+      <div class="body grid two">
+        <div>
+          <h3>长视频 8-12 分钟</h3>
+          <table>
+            <thead><tr><th>时间</th><th>内容</th><th>素材重点</th></tr></thead>
+            <tbody>
+              <tr><td data-label="时间">00:00-00:15</td><td data-label="内容">高能闪回</td><td data-label="素材">飞机、东京夜景、teamLab、新干线、USJ、道顿堀</td></tr>
+              <tr><td data-label="时间">00:15-01:20</td><td data-label="内容">出发与落地</td><td data-label="素材">深圳机场、ANA、羽田、深夜酒店</td></tr>
+              <tr><td data-label="时间">01:20-04:00</td><td data-label="内容">东京打开</td><td data-label="素材">teamLab、银座、浅草、涩谷夜景</td></tr>
+              <tr><td data-label="时间">04:00-05:10</td><td data-label="内容">新干线转场</td><td data-label="素材">东京站、车票、窗外、到大阪</td></tr>
+              <tr><td data-label="时间">05:10-08:10</td><td data-label="内容">大阪高能</td><td data-label="素材">USJ、难波、心斋桥、道顿堀、美食</td></tr>
+              <tr><td data-label="时间">08:10-10:30</td><td data-label="内容">回程与总结</td><td data-label="素材">机场、船、预算、最值与最累</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>短视频 30-60 秒</h3>
+          <div class="list">
+            <div class="step"><strong>0-3秒：钩子</strong><p>最强画面放第一秒：飞机窗外、USJ入园、涩谷夜景任选一个。字幕：一个人深圳出发，日本7天。</p></div>
+            <div class="step"><strong>3-18秒：东京</strong><p>teamLab 光影、浅草传统、涩谷夜景快切。</p></div>
+            <div class="step"><strong>18-28秒：新干线</strong><p>车头、车票、窗外、便当，用一段音乐节奏切过去。</p></div>
+            <div class="step"><strong>28-48秒：大阪</strong><p>USJ、人群、主题食物、道顿堀霓虹、购物袋。</p></div>
+            <div class="step"><strong>48-60秒：结论</strong><p>“这趟不算轻松，但很值。下次我会把行李再减半。”</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sources" class="panel" style="margin-top:14px">
+      <div class="panel-head"><div><h2>设备依据与拍摄备注</h2><div class="hint">设备能力来自官方/公开规格，现场规则以景点当天提示为准</div></div></div>
+      <div class="body sources">
+        <p>Sony A7M4：官方规格显示支持 4K 10-bit 4:2:2 等视频记录格式；4K60 在 Super 35/裁切工作流中使用更合理。iPhone 15 Pro Max：Apple 官方规格支持 4K、HDR、ProRes、Log，4K60 ProRes 需要外接兼容存储。DJI Action 5 Pro：官方规格支持 4K 高帧率和防水运动拍摄。vivo/iQOO 机型因地区页面信息不完全，页面中只把它定位为后勤备机。</p>
+        <p>来源：<a href="https://www.sony.com/electronics/support/e-mount-body-ilce-7-series/ilce-7m4/specifications" target="_blank" rel="noreferrer">Sony A7M4 规格</a> · <a href="https://support.apple.com/en-us/111828" target="_blank" rel="noreferrer">Apple iPhone 15 Pro Max 规格</a> · <a href="https://support.apple.com/en-us/109041" target="_blank" rel="noreferrer">Apple ProRes 说明</a> · <a href="https://www.dji.com/osmo-action-5-pro/specs" target="_blank" rel="noreferrer">DJI Osmo Action 5 Pro 规格</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const days = [
+      {
+        id: "d1",
+        label: "Day 1｜7/7 深圳→东京",
+        theme: "出发、疲惫、深夜落地",
+        kit: "A7M4 少量主画面；Action 拖箱/登机桥；iPhone 竖屏；vivo 导航",
+        line: "第一天不追求景点，安全抵达和躺下就是胜利。画面要拍出从深圳进入东京夜晚的门槛感。",
+        close: "删废片，收藏 20 条；录 30 秒：今天最累是什么，落地东京第一感受是什么。",
+        beats: ["家里关门与拖箱", "深圳机场与登机", "飞机窗外与餐食", "羽田到达与夜路", "酒店开门和房间第一眼"],
+        shots: [
+          ["A7M4", "机场外观、ANA飞机、酒店房间开灯，横屏稳定 5-8 秒。"],
+          ["Action", "拖箱低机位、登机桥 POV、地铁/车窗夜景。"],
+          ["iPhone", "竖屏拍登机牌、到达牌、酒店开门，方便做短视频钩子。"],
+          ["三脚架", "酒店里拍一句：我终于到东京了，今天到此结束。"]
+        ]
+      },
+      {
+        id: "d2",
+        label: "Day 2｜7/8 teamLab→银座/日本桥",
+        theme: "东京像一场光影梦",
+        kit: "A7M4 城市主画面；iPhone/teamLab 快速反应；Action 少量 POV",
+        line: "今天拍“东京慢慢包住你”。不要解释太多，拍光、影、倒影和你站在里面的沉默。",
+        close: "收藏 teamLab 最强 8 条、银座街头 6 条；录 30 秒：东京第一整天值不值。",
+        beats: ["酒店早晨与便利店", "地铁去 teamLab", "teamLab 光影和背影", "银座/日本桥街区", "夜归酒店"],
+        shots: [
+          ["A7M4", "银座街头、橱窗、日本桥路牌、晚餐食物。"],
+          ["iPhone", "teamLab 竖屏光影、你的背影、快速自拍总结。"],
+          ["Action", "地铁刷卡、走路脚步、从展馆走到街区的转场。"],
+          ["三脚架", "如果房间空间够，拍早晨整理包和晚上回房总结。"]
+        ]
+      },
+      {
+        id: "d3",
+        label: "Day 3｜7/9 浅草→涩谷夜景",
+        theme: "传统东京到现代东京",
+        kit: "A7M4 全天主机；iPhone 竖屏人潮；vivo 查路线",
+        line: "今天是对比：白天的屋檐、香火和小吃，晚上切到涩谷大屏、人潮和高楼夜景。",
+        close: "把浅草和涩谷分两个收藏夹；录 30 秒：哪个东京更打动你。",
+        beats: ["浅草雷门", "仲见世小吃", "浅草寺细节", "地铁转场", "涩谷夜景"],
+        shots: [
+          ["A7M4", "雷门广角、屋檐特写、涩谷夜景横屏主镜头。"],
+          ["iPhone", "涩谷十字路口竖屏、人潮快切、夜景前自拍。"],
+          ["Action", "仲见世人流 POV、地铁门关闭作为传统到现代的转场。"],
+          ["三脚架", "不用带，今天人多，减少负担。"]
+        ]
+      },
+      {
+        id: "d4",
+        label: "Day 4｜7/10 东京→大阪",
+        theme: "新干线切换城市节奏",
+        kit: "A7M4 站台和窗外；Action 拖箱 POV；iPhone 车票/竖屏",
+        line: "这是全片中最重要的转场。拍清楚从东京秩序到大阪热闹的节奏变化。",
+        close: "收藏新干线 10 条；录 30 秒：东京和大阪第一印象差别。",
+        beats: ["东京酒店退房", "东京站", "新干线上车", "窗外与便当", "抵达大阪/难波第一眼"],
+        shots: [
+          ["A7M4", "东京站外观、新干线车头、窗外长镜、到大阪第一眼。"],
+          ["Action", "拖箱、进站、上车脚步、行李架。"],
+          ["iPhone", "车票、站台号、便当、短视频转场口播。"],
+          ["三脚架", "不用在车站展开；晚上酒店可拍大阪开场。"]
+        ]
+      },
+      {
+        id: "d5",
+        label: "Day 5｜7/11 USJ",
+        theme: "高能、童话、累但快乐",
+        kit: "Action + iPhone 为主；A7M4 留酒店；vivo 做导航和备机",
+        line: "今天只拍快乐和真实体力，不追求电影机质感。USJ 的核心是反应、排队、食物、离园后的累。",
+        close: "收藏最快乐 12 条和最累 3 条；录 30 秒：今天最值的项目和最累的瞬间。",
+        beats: ["早起出发", "USJ入口地球", "入园街道", "项目后反应", "离园回酒店"],
+        shots: [
+          ["Action", "入园 POV、排队、人流、项目后走路、离园低机位。"],
+          ["iPhone", "竖屏入口、主题食物、商店、你的反应和短视频主素材。"],
+          ["vivo", "查排队时间、记录预算和语音总结。"],
+          ["A7M4", "不带。省力就是今天最重要的专业判断。"]
+        ]
+      },
+      {
+        id: "d6",
+        label: "Day 6｜7/12 难波/心斋桥/道顿堀",
+        theme: "大阪吃逛买",
+        kit: "A7M4 夜景主机；iPhone 购物竖屏；Action 少量街头 POV",
+        line: "今天拍大阪的直接快乐。招牌、食物、购物袋、霓虹倒影，每一条都要有消费和生活感。",
+        close: "酒店摆拍战利品；录 30 秒：买什么最值，哪顿最好吃。",
+        beats: ["心斋桥商店街", "药妆/购物", "大阪食物", "道顿堀霓虹", "战利品摆拍"],
+        shots: [
+          ["A7M4", "道顿堀夜景、食物特写、购物街横屏空镜。"],
+          ["iPhone", "购物竖屏、付款、小票、战利品开箱。"],
+          ["Action", "商店街走路、人流、河边 POV。"],
+          ["三脚架", "酒店战利品俯拍和睡前总结。"]
+        ]
+      },
+      {
+        id: "d7",
+        label: "Day 7｜7/13 大阪→香港→深圳",
+        theme: "回程、告别、总结",
+        kit: "轻装：Action + iPhone；A7M4 只拍关键镜头；vivo 导航",
+        line: "最后一天要拍闭环：房间最后一眼、机场、船、深圳。不要只拍交通，要拍结束感。",
+        close: "整理全片素材；录最终总结：最值三件事、最累一件事、下次怎么改。",
+        beats: ["房间最后一眼", "退房去机场", "关西机场", "香港转船", "回深圳"],
+        shots: [
+          ["A7M4", "房间最后一眼、机场大景、回家前总结。"],
+          ["Action", "拖箱、车窗、船上窗外、回深圳低机位。"],
+          ["iPhone", "航班屏、船票、到达标识、最终竖屏总结。"],
+          ["vivo", "查交通和记录花费，保持主手机电量。"]
+        ]
+      }
+    ];
+
+    const dayList = document.querySelector("#day-list");
+    const dayTitle = document.querySelector("#day-title");
+    const dayHint = document.querySelector("#day-hint");
+    const dayTimeline = document.querySelector("#day-timeline");
+    const shotGrid = document.querySelector("#shot-grid");
+    const directorLine = document.querySelector("#director-line");
+    const nightClose = document.querySelector("#night-close");
+
+    function renderDay(index) {
+      const day = days[index];
+      document.querySelectorAll(".day-card").forEach((card, i) => card.classList.toggle("active", i === index));
+      dayTitle.textContent = day.label;
+      dayHint.textContent = `${day.theme}｜${day.kit}`;
+      directorLine.textContent = day.line;
+      nightClose.textContent = day.close;
+      dayTimeline.innerHTML = day.beats.map((beat, i) => `<div class="step"><strong>${i + 1}. ${beat}</strong><p>先拍交代镜头，再拍动作和情绪，最后补一个转场。</p></div>`).join("");
+      shotGrid.innerHTML = day.shots.map(s => `<article class="shot"><div class="lens">${s[0]}</div><div><strong>${s[0]}怎么用</strong><p>${s[1]}</p></div></article>`).join("");
+    }
+
+    dayList.innerHTML = days.map((day, i) => `
+      <article class="day-card ${i === 0 ? "active" : ""}" data-day="${i}">
+        <strong>${day.label}</strong>
+        <p>${day.theme}</p>
+        <div class="day-meta"><span class="badge red">${day.kit.split("；")[0]}</span><span class="badge blue">按镜头表拍</span></div>
+      </article>
+    `).join("");
+    dayList.addEventListener("click", e => {
+      const card = e.target.closest(".day-card");
+      if (!card) return;
+      renderDay(Number(card.dataset.day));
+      document.querySelector("#today").scrollIntoView({ block: "start" });
+    });
+    renderDay(0);
+
+    document.body.addEventListener("click", e => {
+      const jump = e.target.dataset.jump;
+      if (!jump) return;
+      document.getElementById(jump)?.scrollIntoView({ block: "start" });
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.jump === jump));
+    });
+
+    const storeKey = "japan-vlog-director-checks-v1";
+    const checks = [...document.querySelectorAll("[data-task]")];
+    const saved = JSON.parse(localStorage.getItem(storeKey) || "{}");
+    function updateProgress() {
+      let done = 0;
+      checks.forEach(input => {
+        const text = input.nextElementSibling;
+        text.classList.toggle("done", input.checked);
+        if (input.checked) done += 1;
+      });
+      document.querySelector("#progress").textContent = `${done}/${checks.length} 已完成`;
+    }
+    checks.forEach(input => {
+      input.checked = !!saved[input.dataset.task];
+      input.addEventListener("change", () => {
+        saved[input.dataset.task] = input.checked;
+        localStorage.setItem(storeKey, JSON.stringify(saved));
+        updateProgress();
+      });
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

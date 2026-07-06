@@ -58,6 +58,20 @@
     }
     a { color: color-mix(in oklch, var(--accent) 80%, var(--ink)); text-decoration: none; font-weight: 650; }
     a:hover { text-decoration: underline; }
+    .button-link {
+      display: inline-flex;
+      min-height: 38px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .button-link:hover { text-decoration: none; filter: brightness(.98); }
     .app { max-width: 1480px; margin: 0 auto; padding: 18px; }
     .top {
       position: relative;
@@ -481,6 +495,7 @@
         <div class="sub">私人旅行策划师 · 路线规划师 · 低token旅行智能体｜当前旅行包：日本 2026</div>
       </div>
       <div class="actions">
+        <a class="button-link" href="./vlog-director.html">Vlog导演手册</a>
         <button id="copy-md">复制行程模板</button>
         <button class="secondary" id="copy-json">复制Trip JSON</button>
       </div>
