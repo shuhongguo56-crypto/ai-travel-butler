@@ -103,13 +103,23 @@
     .body { padding: 12px; }
     .loader {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto auto auto;
       gap: 8px;
       align-items: center;
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 10px;
       background: color-mix(in oklch, var(--blue) 10%, white);
+    }
+    .folder-input {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 750;
+      min-width: 190px;
     }
     .file-input {
       width: 100%;
@@ -251,6 +261,13 @@
       background: var(--surface);
     }
     .log-row strong { overflow-wrap: anywhere; }
+    .status {
+      margin-top: 8px;
+      min-height: 26px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
     .hidden { display: none; }
     @media (max-width: 760px) {
       .app { padding: 10px; }
@@ -287,8 +304,12 @@
       <div class="body">
         <div class="loader">
           <input class="file-input" id="file-input" type="file" accept="image/*,video/*" multiple>
+          <input class="folder-input" id="folder-root" value="JapanTrip_Sorted" aria-label="分拣目录名">
+          <button class="good" id="write-folder">写入文件夹</button>
+          <button class="blue" id="export-zip">分拣ZIP</button>
           <button class="primary" id="export-csv">导出 CSV</button>
         </div>
+        <div class="status" id="status">iPad/微信浏览器通常不能直接移动原文件；可导出分拣 ZIP，解压后就是按标签归类的文件夹。</div>
         <div class="stats" id="stats"></div>
       </div>
     </section>
@@ -333,9 +354,18 @@
     const currentTag = document.querySelector("#current-tag");
     const stats = document.querySelector("#stats");
     const log = document.querySelector("#log");
+    const status = document.querySelector("#status");
+    const folderRoot = document.querySelector("#folder-root");
     const keepLabel = document.querySelector("#keep-label");
     const rejectLabel = document.querySelector("#reject-label");
     const storeKey = "ipad-pianke-swipe-v1";
+    const folderMap = {
+      "精选": "01_SELECTS",
+      "必剪": "02_TO_EDIT",
+      "短视频": "03_SHORTS",
+      "长片": "04_LONG_FILM",
+      "废片": "05_REJECT_REVIEW"
+    };
     let files = [];
     let index = 0;
     let history = [];
@@ -352,6 +382,33 @@
       if (value > 1024 * 1024 * 1024) return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`;
       if (value > 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`;
       return `${(value / 1024).toFixed(1)} KB`;
+    }
+    function safeName(value) {
+      return String(value || "JapanTrip_Sorted")
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, "_")
+        .replace(/\s+/g, "_")
+        .slice(0, 80) || "JapanTrip_Sorted";
+    }
+    function folderForTag(tag) {
+      return folderMap[tag] || "00_UNSORTED";
+    }
+    function selectedFiles() {
+      return files
+        .map(file => ({ file, tag: tags[key(file)] || "" }))
+        .filter(item => item.tag);
+    }
+    function setStatus(message, tone = "") {
+      status.textContent = message;
+      status.style.color = tone === "bad" ? "var(--red)" : tone === "good" ? "var(--green)" : "var(--muted)";
+    }
+    function downloadBlob(blob, name) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 500);
     }
     function save() {
       localStorage.setItem(storeKey, JSON.stringify(tags));
@@ -492,21 +549,170 @@
       save();
       render();
     });
+    function sortedFileName(file, order) {
+      return `${String(order + 1).padStart(3, "0")}_${safeName(file.name)}`;
+    }
+    async function writeToFolder() {
+      const items = selectedFiles();
+      if (!items.length) {
+        setStatus("先给素材打标签，再写入文件夹。", "bad");
+        return;
+      }
+      if (!window.showDirectoryPicker) {
+        setStatus("当前浏览器不能直接写入 iPad 文件夹，已切换为分拣 ZIP。解压后就是目录。");
+        await exportSortedZip();
+        return;
+      }
+      try {
+        const parent = await window.showDirectoryPicker({ mode: "readwrite" });
+        const root = await parent.getDirectoryHandle(safeName(folderRoot.value), { create: true });
+        for (let i = 0; i < items.length; i += 1) {
+          const { file, tag } = items[i];
+          const dir = await root.getDirectoryHandle(folderForTag(tag), { create: true });
+          const handle = await dir.getFileHandle(sortedFileName(file, i), { create: true });
+          const writable = await handle.createWritable();
+          await writable.write(file);
+          await writable.close();
+          setStatus(`正在复制 ${i + 1}/${items.length}：${file.name}`);
+        }
+        setStatus(`已复制 ${items.length} 个素材到 ${safeName(folderRoot.value)}。`, "good");
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          setStatus("已取消写入文件夹。");
+          return;
+        }
+        setStatus(`写入失败：${error?.message || error}`, "bad");
+      }
+    }
+    function makeCrcTable() {
+      const table = new Uint32Array(256);
+      for (let i = 0; i < 256; i += 1) {
+        let c = i;
+        for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+        table[i] = c >>> 0;
+      }
+      return table;
+    }
+    const crcTable = makeCrcTable();
+    function crc32(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let crc = 0xffffffff;
+      for (let i = 0; i < bytes.length; i += 1) crc = crcTable[(crc ^ bytes[i]) & 0xff] ^ (crc >>> 8);
+      return (crc ^ 0xffffffff) >>> 0;
+    }
+    function dosDateTime(date = new Date()) {
+      const year = Math.max(1980, date.getFullYear());
+      return {
+        time: (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2),
+        date: ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate()
+      };
+    }
+    function put16(view, offset, value) {
+      view.setUint16(offset, value, true);
+    }
+    function put32(view, offset, value) {
+      view.setUint32(offset, value >>> 0, true);
+    }
+    function localHeader(nameBytes, crc, sizeValue, stamp) {
+      const buffer = new ArrayBuffer(30 + nameBytes.length);
+      const view = new DataView(buffer);
+      put32(view, 0, 0x04034b50);
+      put16(view, 4, 20);
+      put16(view, 6, 0x0800);
+      put16(view, 8, 0);
+      put16(view, 10, stamp.time);
+      put16(view, 12, stamp.date);
+      put32(view, 14, crc);
+      put32(view, 18, sizeValue);
+      put32(view, 22, sizeValue);
+      put16(view, 26, nameBytes.length);
+      put16(view, 28, 0);
+      new Uint8Array(buffer, 30).set(nameBytes);
+      return buffer;
+    }
+    function centralHeader(nameBytes, crc, sizeValue, offsetValue, stamp) {
+      const buffer = new ArrayBuffer(46 + nameBytes.length);
+      const view = new DataView(buffer);
+      put32(view, 0, 0x02014b50);
+      put16(view, 4, 20);
+      put16(view, 6, 20);
+      put16(view, 8, 0x0800);
+      put16(view, 10, 0);
+      put16(view, 12, stamp.time);
+      put16(view, 14, stamp.date);
+      put32(view, 16, crc);
+      put32(view, 20, sizeValue);
+      put32(view, 24, sizeValue);
+      put16(view, 28, nameBytes.length);
+      put16(view, 30, 0);
+      put16(view, 32, 0);
+      put16(view, 34, 0);
+      put16(view, 36, 0);
+      put32(view, 38, 0);
+      put32(view, 42, offsetValue);
+      new Uint8Array(buffer, 46).set(nameBytes);
+      return buffer;
+    }
+    function endRecord(entries, cdSize, cdOffset) {
+      const buffer = new ArrayBuffer(22);
+      const view = new DataView(buffer);
+      put32(view, 0, 0x06054b50);
+      put16(view, 4, 0);
+      put16(view, 6, 0);
+      put16(view, 8, entries);
+      put16(view, 10, entries);
+      put32(view, 12, cdSize);
+      put32(view, 16, cdOffset);
+      put16(view, 20, 0);
+      return buffer;
+    }
+    async function exportSortedZip() {
+      const items = selectedFiles();
+      if (!items.length) {
+        setStatus("先给素材打标签，再导出分拣 ZIP。", "bad");
+        return;
+      }
+      const totalSize = items.reduce((sum, item) => sum + item.file.size, 0);
+      if (totalSize > 0xffffffff) {
+        setStatus("本批素材超过 4GB，请分天或分标签导出；iPad 浏览器一次封装太大容易失败。", "bad");
+        return;
+      }
+      const encoder = new TextEncoder();
+      const root = safeName(folderRoot.value);
+      const parts = [];
+      const central = [];
+      const stamp = dosDateTime();
+      let offset = 0;
+      for (let i = 0; i < items.length; i += 1) {
+        const { file, tag } = items[i];
+        const path = `${root}/${folderForTag(tag)}/${sortedFileName(file, i)}`;
+        const nameBytes = encoder.encode(path);
+        const buffer = await file.arrayBuffer();
+        const crc = crc32(buffer);
+        const local = localHeader(nameBytes, crc, file.size, stamp);
+        parts.push(local, file);
+        central.push(centralHeader(nameBytes, crc, file.size, offset, stamp));
+        offset += local.byteLength + file.size;
+        setStatus(`正在生成 ZIP ${i + 1}/${items.length}：${file.name}`);
+      }
+      const cdOffset = offset;
+      const cdSize = central.reduce((sum, item) => sum + item.byteLength, 0);
+      const blob = new Blob([...parts, ...central, endRecord(items.length, cdSize, cdOffset)], { type: "application/zip" });
+      downloadBlob(blob, `${root}_${new Date().toISOString().slice(0, 10)}.zip`);
+      setStatus(`已生成分拣 ZIP：${items.length} 个素材，解压后自动按标签分文件夹。`, "good");
+    }
+    document.querySelector("#write-folder").addEventListener("click", writeToFolder);
+    document.querySelector("#export-zip").addEventListener("click", exportSortedZip);
     document.querySelector("#export-csv").addEventListener("click", () => {
-      const map = { "精选": "S_SELECTS_20", "必剪": "T_TO_EDIT", "短视频": "02_SHORTS", "长片": "03_LONG_FILM", "废片": "Reject_Do_Not_Delete_Yet" };
-      const rows = [["file_name", "size", "type", "tag", "suggest_folder"]];
+      const rows = [["file_name", "sorted_name", "size", "type", "tag", "suggest_folder"]];
       files.forEach(file => {
         const tag = tags[key(file)] || "";
-        rows.push([file.name, file.size, file.type, tag, map[tag] || "Unsorted"]);
+        rows.push([file.name, tag ? sortedFileName(file, rows.length - 1) : "", file.size, file.type, tag, folderForTag(tag)]);
       });
       const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `ipad_swipe_selects_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `ipad_swipe_selects_${new Date().toISOString().slice(0, 10)}.csv`);
+      setStatus("已导出 CSV 清单。", "good");
     });
     render();
   </script>
