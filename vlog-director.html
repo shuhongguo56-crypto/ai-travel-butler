@@ -271,6 +271,77 @@
     }
     .folder-day b { font-size: 13px; }
     .folder-day span { color: var(--muted); }
+    .picker-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: color-mix(in oklch, var(--blue) 10%, white);
+    }
+    .file-input {
+      width: 100%;
+      min-height: 40px;
+      border: 1px dashed color-mix(in oklch, var(--blue) 58%, var(--line));
+      border-radius: 8px;
+      padding: 8px;
+      background: var(--surface);
+      font: inherit;
+    }
+    .pick-stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .pick-stat {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: var(--surface);
+      font-size: 12px;
+    }
+    .pick-stat b { display: block; margin-top: 3px; font-size: 18px; }
+    .pick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+    }
+    .pick-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .pick-thumb {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 16 / 10;
+      background: color-mix(in oklch, var(--ink) 8%, white);
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .pick-thumb img, .pick-thumb video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .pick-info { padding: 10px; font-size: 12px; line-height: 1.45; }
+    .pick-info strong { display: block; font-size: 13px; overflow-wrap: anywhere; }
+    .pick-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .pick-actions button {
+      min-height: 30px;
+      padding: 5px 8px;
+      border-color: var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: none;
+      font-size: 12px;
+    }
+    .pick-actions button.active { color: #fff; border-color: var(--ink); background: var(--ink); }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
     th { color: var(--muted); background: color-mix(in oklch, var(--blue) 11%, white); font-weight: 850; }
@@ -286,6 +357,7 @@
       .shot { grid-template-columns: 58px minmax(0, 1fr); }
       .command { grid-template-columns: 1fr; }
       .folder-day { grid-template-columns: 64px minmax(0, 1fr); }
+      .picker-bar, .pick-stats { grid-template-columns: 1fr; }
       table, thead, tbody, tr, td, th { display: block; }
       thead { display: none; }
       tr { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; overflow: hidden; background: var(--surface); }
@@ -309,6 +381,7 @@
       <div class="hero-actions">
         <button class="primary" data-jump="today">进入每日拍摄</button>
         <button data-jump="prep">出发前准备</button>
+        <button data-jump="picker">iPad选片台</button>
         <button data-jump="storage">素材库</button>
         <button data-jump="edit">剪辑框架</button>
       </div>
@@ -319,6 +392,7 @@
       <button class="tab" data-jump="prep">出发前</button>
       <button class="tab" data-jump="kit">设备分工</button>
       <button class="tab" data-jump="today">每日执行</button>
+      <button class="tab" data-jump="picker">iPad选片台</button>
       <button class="tab" data-jump="storage">素材库</button>
       <button class="tab" data-jump="edit">剪辑闭环</button>
       <button class="tab" data-jump="sources">依据</button>
@@ -445,6 +519,20 @@
       </section>
     </section>
 
+    <section id="picker" class="panel" style="margin-top:14px">
+      <div class="panel-head"><div><h2>iPad 片刻选片台</h2><div class="hint">网页不上传素材，只读取你这次选择的文件名和预览，适合每天回酒店快速打标签</div></div><span class="badge red">无电脑版</span></div>
+      <div class="body grid" style="gap:10px">
+        <div class="mini-card director-note"><strong>怎么用</strong><p>这是借鉴 GitHub「片刻 Pianke」选片思路做的 iPad 轻量版。每天只导入当天一批素材，不要一次选整趟。点“选择当天素材”，从“文件”App/照片里选视频或照片，然后给每条打标签。最后导出 CSV，把清单存到当天 <b>00_ADMIN</b> 或 <b>E_AUDIO_NOTES</b> 旁边。</p></div>
+        <div class="picker-bar">
+          <input class="file-input" id="pick-input" type="file" accept="image/*,video/*" multiple>
+          <button class="primary" id="export-csv">导出选片CSV</button>
+          <button id="clear-picks">清空本页</button>
+        </div>
+        <div class="pick-stats" id="pick-stats"></div>
+        <div class="pick-grid" id="pick-grid"></div>
+      </div>
+    </section>
+
     <section id="storage" class="panel" style="margin-top:14px">
       <div class="panel-head"><div><h2>iPad 素材库</h2><div class="hint">没有电脑时，用 iPad“文件”App + 外接 SSD/SD 读卡器 + 相册精选完成归类</div></div><span class="badge blue">iPad 主控</span></div>
       <div class="body grid two">
@@ -541,7 +629,7 @@
         <p>Sony A7M4：官方规格显示支持 4K 10-bit 4:2:2 等视频记录格式；4K60 在 Super 35/裁切工作流中使用更合理。iPhone 15 Pro Max：Apple 官方规格支持 4K、HDR、ProRes、Log，4K60 ProRes 需要外接兼容存储。DJI Action 5 Pro：官方规格支持 4K 高帧率和防水运动拍摄。vivo/iQOO 机型因地区页面信息不完全，页面中只把它定位为后勤备机。</p>
         <p>iPad 素材管理依据：Apple 官方说明显示，iPad 可通过“文件”App 访问外接 USB 盘、SD 卡等存储设备；也可以从相机、SD 卡、iPhone/iPad 导入照片和视频，并可把未修改的照片视频导出到外接存储。Final Cut Pro for iPad 也支持导出到 iCloud Drive、照片图库、外接存储或 iPad 本机。</p>
         <p>素材管理思路：TagSpaces 提供本地文件标签和预览；ExifTool 可读取/写入照片视频元数据；rclone/restic 代表同步和可校验备份思路。但你旅途中不需要部署它们，只采用轻量思想：文件夹、精选、标签、备份。</p>
-        <p>来源：<a href="https://support.apple.com/guide/ipad/external-storage-devices-ipad75b7b23f/ipados" target="_blank" rel="noreferrer">iPad 外接存储</a> · <a href="https://support.apple.com/guide/ipad/import-and-export-photos-and-videos-ipad99c6eb3e/ipados" target="_blank" rel="noreferrer">iPad 导入/导出照片视频</a> · <a href="https://support.apple.com/guide/final-cut-pro-ipad/export-or-share-dev8ce20673a/ipados" target="_blank" rel="noreferrer">Final Cut Pro for iPad 导出</a> · <a href="https://www.sony.com/electronics/support/e-mount-body-ilce-7-series/ilce-7m4/specifications" target="_blank" rel="noreferrer">Sony A7M4 规格</a> · <a href="https://support.apple.com/en-us/111828" target="_blank" rel="noreferrer">Apple iPhone 15 Pro Max 规格</a> · <a href="https://www.dji.com/osmo-action-5-pro/specs" target="_blank" rel="noreferrer">DJI Action 5 Pro 规格</a> · <a href="https://github.com/tagspaces/tagspaces" target="_blank" rel="noreferrer">TagSpaces</a></p>
+        <p>来源：<a href="https://support.apple.com/guide/ipad/external-storage-devices-ipad75b7b23f/ipados" target="_blank" rel="noreferrer">iPad 外接存储</a> · <a href="https://support.apple.com/guide/ipad/import-and-export-photos-and-videos-ipad99c6eb3e/ipados" target="_blank" rel="noreferrer">iPad 导入/导出照片视频</a> · <a href="https://support.apple.com/guide/final-cut-pro-ipad/export-or-share-dev8ce20673a/ipados" target="_blank" rel="noreferrer">Final Cut Pro for iPad 导出</a> · <a href="https://www.sony.com/electronics/support/e-mount-body-ilce-7-series/ilce-7m4/specifications" target="_blank" rel="noreferrer">Sony A7M4 规格</a> · <a href="https://support.apple.com/en-us/111828" target="_blank" rel="noreferrer">Apple iPhone 15 Pro Max 规格</a> · <a href="https://www.dji.com/osmo-action-5-pro/specs" target="_blank" rel="noreferrer">DJI Action 5 Pro 规格</a> · <a href="https://github.com/zhaoyue4810/pianke" target="_blank" rel="noreferrer">片刻 Pianke</a> · <a href="https://github.com/tagspaces/tagspaces" target="_blank" rel="noreferrer">TagSpaces</a></p>
       </div>
     </section>
   </main>
@@ -671,6 +759,19 @@
     const shotGrid = document.querySelector("#shot-grid");
     const directorLine = document.querySelector("#director-line");
     const nightClose = document.querySelector("#night-close");
+    const pickInput = document.querySelector("#pick-input");
+    const pickGrid = document.querySelector("#pick-grid");
+    const pickStats = document.querySelector("#pick-stats");
+    const pickerKey = "japan-vlog-ipad-picker-v1";
+    let pickFiles = [];
+    let pickState = JSON.parse(localStorage.getItem(pickerKey) || "{}");
+    function esc(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
 
     function renderDay(index) {
       const day = days[index];
@@ -703,6 +804,86 @@
         <div><strong>${d[1]}</strong><br><span>${d[2]}</span></div>
       </article>
     `).join("");
+
+    function fileKey(file) {
+      return `${file.name}_${file.size}_${file.lastModified}`;
+    }
+    function fileSize(size) {
+      if (size > 1024 * 1024 * 1024) return `${(size / 1024 / 1024 / 1024).toFixed(1)} GB`;
+      if (size > 1024 * 1024) return `${(size / 1024 / 1024).toFixed(1)} MB`;
+      return `${(size / 1024).toFixed(1)} KB`;
+    }
+    function setPick(key, value) {
+      pickState[key] = value;
+      localStorage.setItem(pickerKey, JSON.stringify(pickState));
+      renderPicker();
+    }
+    function renderPicker() {
+      const labels = ["必剪", "精选", "短视频", "长片", "废片"];
+      const activeKeys = new Set(pickFiles.map(file => fileKey(file)));
+      const counts = Object.entries(pickState).filter(([key]) => activeKeys.has(key)).map(([, label]) => label).reduce((acc, label) => {
+        acc[label] = (acc[label] || 0) + 1;
+        return acc;
+      }, {});
+      pickStats.innerHTML = labels.map(label => `<div class="pick-stat"><span>${label}</span><b>${counts[label] || 0}</b></div>`).join("");
+      if (!pickFiles.length) {
+        pickGrid.innerHTML = `<div class="mini-card"><strong>还没有选择素材</strong><p>点上方“选择文件”，每天只选当天素材。iPad 浏览器不会上传你的文件，标签只保存在当前浏览器。</p></div>`;
+        return;
+      }
+      pickGrid.innerHTML = pickFiles.map((file, index) => {
+        const key = fileKey(file);
+        const label = pickState[key] || "";
+        const isImage = file.type.startsWith("image/");
+        const isVideo = file.type.startsWith("video/");
+        if (!file.previewUrl) file.previewUrl = URL.createObjectURL(file);
+        const url = file.previewUrl;
+        const preview = isImage
+          ? `<img src="${esc(url)}" alt="">`
+          : isVideo ? `<video src="${esc(url)}" muted playsinline preload="metadata"></video>` : `<span>${esc(file.type || "FILE")}</span>`;
+        return `<article class="pick-card">
+          <div class="pick-thumb">${preview}</div>
+          <div class="pick-info">
+            <strong>${index + 1}. ${esc(file.name)}</strong>
+            <span>${esc(file.type || "未知类型")} · ${fileSize(file.size)}</span>
+            <div class="pick-actions">
+              ${labels.map(x => `<button class="${label === x ? "active" : ""}" data-pick="${encodeURIComponent(key)}" data-label="${x}">${x}</button>`).join("")}
+            </div>
+          </div>
+        </article>`;
+      }).join("");
+    }
+    pickInput.addEventListener("change", e => {
+      pickFiles.forEach(file => file.previewUrl && URL.revokeObjectURL(file.previewUrl));
+      pickFiles = [...e.target.files];
+      renderPicker();
+    });
+    document.querySelector("#clear-picks").addEventListener("click", () => {
+      pickFiles = [];
+      pickInput.value = "";
+      renderPicker();
+    });
+    document.querySelector("#export-csv").addEventListener("click", () => {
+      const rows = [["file_name", "size", "type", "tag", "suggest_folder"]];
+      const folderMap = { "必剪": "T_TO_EDIT", "精选": "S_SELECTS_20", "短视频": "02_SHORTS", "长片": "03_LONG_FILM", "废片": "Reject_Do_Not_Delete_Yet" };
+      pickFiles.forEach(file => {
+        const tag = pickState[fileKey(file)] || "";
+        rows.push([file.name, file.size, file.type, tag, folderMap[tag] || "Unsorted"]);
+      });
+      const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ipad_selects_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+    pickGrid.addEventListener("click", e => {
+      const btn = e.target.closest("[data-pick]");
+      if (!btn) return;
+      setPick(decodeURIComponent(btn.dataset.pick), btn.dataset.label);
+    });
+    renderPicker();
 
     document.body.addEventListener("click", e => {
       const jump = e.target.dataset.jump;
