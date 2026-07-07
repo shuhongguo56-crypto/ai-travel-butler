@@ -39,7 +39,10 @@
     h2 { font-size: 20px; }
     h3 { font-size: 16px; }
     p { margin: 0; }
-    button {
+    button, .button-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       min-height: 38px;
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -49,6 +52,7 @@
       font: inherit;
       font-weight: 750;
       cursor: pointer;
+      text-decoration: none;
     }
     button.primary {
       color: #fff;
@@ -381,7 +385,7 @@
       <div class="hero-actions">
         <button class="primary" data-jump="today">进入每日拍摄</button>
         <button data-jump="prep">出发前准备</button>
-        <button data-jump="picker">iPad选片台</button>
+        <a class="button-link" href="./ipad-pianke.html">左右滑动选片</a>
         <button data-jump="storage">素材库</button>
         <button data-jump="edit">剪辑框架</button>
       </div>
@@ -392,7 +396,7 @@
       <button class="tab" data-jump="prep">出发前</button>
       <button class="tab" data-jump="kit">设备分工</button>
       <button class="tab" data-jump="today">每日执行</button>
-      <button class="tab" data-jump="picker">iPad选片台</button>
+      <a class="tab" href="./ipad-pianke.html">滑动选片</a>
       <button class="tab" data-jump="storage">素材库</button>
       <button class="tab" data-jump="edit">剪辑闭环</button>
       <button class="tab" data-jump="sources">依据</button>

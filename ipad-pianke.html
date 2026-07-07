@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>iPad 片刻滑动选片台</title>
+  <link rel="icon" href="data:," />
+  <style>
+    :root {
+      --bg: oklch(0.965 0.018 232);
+      --surface: oklch(1 0 0);
+      --soft: oklch(0.955 0.026 13);
+      --blue: oklch(0.62 0.12 215);
+      --red: oklch(0.58 0.18 28);
+      --pink: oklch(0.78 0.11 354);
+      --gold: oklch(0.78 0.12 88);
+      --green: oklch(0.5 0.12 154);
+      --ink: oklch(0.21 0.048 258);
+      --muted: oklch(0.42 0.04 252);
+      --line: oklch(0.86 0.025 236);
+      --shadow: oklch(0.34 0.05 250 / .13);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, oklch(0.95 0.034 215) 0, var(--bg) 320px),
+        var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      letter-spacing: 0;
+      overscroll-behavior: none;
+    }
+    a { color: color-mix(in oklch, var(--red) 82%, var(--ink)); font-weight: 750; text-decoration: none; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 28px; line-height: 1.12; text-wrap: balance; }
+    h2 { font-size: 18px; line-height: 1.2; }
+    button, input { font: inherit; }
+    button, .button-link {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--ink);
+      background: var(--surface);
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    button.primary {
+      color: #fff;
+      border-color: color-mix(in oklch, var(--red) 72%, var(--ink));
+      background: linear-gradient(180deg, color-mix(in oklch, var(--red) 88%, white), var(--red));
+      box-shadow: 0 3px 8px var(--shadow);
+    }
+    button.good { color: #fff; border-color: var(--green); background: var(--green); }
+    button.bad { color: #fff; border-color: var(--red); background: var(--red); }
+    button.blue { color: #fff; border-color: var(--blue); background: var(--blue); }
+    .app { max-width: 1180px; margin: 0 auto; padding: 14px; }
+    .top {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: end;
+      padding: 16px;
+      border: 1px solid color-mix(in oklch, var(--line) 84%, white);
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--surface) 0 56%, oklch(0.956 0.028 205) 56% 100%);
+      box-shadow: 0 4px 8px var(--shadow);
+      overflow: hidden;
+    }
+    .top::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--red), var(--pink), var(--blue), var(--gold));
+    }
+    .top > * { position: relative; z-index: 1; }
+    .kicker { margin-bottom: 6px; color: color-mix(in oklch, var(--red) 78%, var(--ink)); font-size: 12px; font-weight: 900; }
+    .sub { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.55; max-width: 70ch; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .panel {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface);
+      box-shadow: 0 3px 8px var(--shadow);
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(90deg, color-mix(in oklch, var(--blue) 13%, white), white 64%);
+    }
+    .hint { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .body { padding: 12px; }
+    .loader {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: color-mix(in oklch, var(--blue) 10%, white);
+    }
+    .file-input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px dashed color-mix(in oklch, var(--blue) 58%, var(--line));
+      border-radius: 8px;
+      padding: 8px;
+      background: var(--surface);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: var(--surface);
+      font-size: 12px;
+    }
+    .stat b { display: block; margin-top: 3px; font-size: 20px; }
+    .stage {
+      position: relative;
+      height: min(70vh, 760px);
+      min-height: 430px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 10px;
+      padding: 12px;
+      touch-action: pan-y;
+      user-select: none;
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .badge {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: color-mix(in oklch, var(--soft) 70%, white);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+    .viewer {
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: oklch(0.16 0.025 258);
+      cursor: grab;
+    }
+    .viewer.dragging { cursor: grabbing; }
+    .card-media {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      transform: translateX(var(--dx, 0px)) rotate(var(--rot, 0deg));
+      transition: transform .18s ease, opacity .18s ease;
+    }
+    .card-media img, .card-media video {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .empty {
+      display: grid;
+      place-items: center;
+      height: 100%;
+      color: oklch(0.9 0.01 250);
+      text-align: center;
+      padding: 20px;
+      line-height: 1.55;
+    }
+    .swipe-label {
+      position: absolute;
+      top: 18px;
+      min-width: 86px;
+      border: 2px solid currentColor;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 18px;
+      font-weight: 950;
+      opacity: var(--label-opacity, 0);
+      transform: rotate(var(--label-rot, 0deg));
+      pointer-events: none;
+    }
+    .swipe-label.keep { left: 18px; color: var(--green); --label-rot: -8deg; }
+    .swipe-label.reject { right: 18px; color: var(--red); --label-rot: 8deg; }
+    .file-name {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: oklch(0.1 0.02 250 / .72);
+      color: white;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .controls button { min-height: 44px; }
+    .log {
+      display: grid;
+      gap: 8px;
+      max-height: 220px;
+      overflow: auto;
+    }
+    .log-row {
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr);
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 12px;
+      background: var(--surface);
+    }
+    .log-row strong { overflow-wrap: anywhere; }
+    .hidden { display: none; }
+    @media (max-width: 760px) {
+      .app { padding: 10px; }
+      .top, .loader { grid-template-columns: 1fr; }
+      .actions { justify-content: flex-start; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .stage { height: 74vh; min-height: 520px; padding: 10px; }
+      .controls { grid-template-columns: 1fr 1fr 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <div>
+        <div class="kicker">Pianke-style iPad Culling</div>
+        <h1>iPad 左右滑动选片台</h1>
+        <p class="sub">本页不上传素材，只在浏览器本地预览。每天只选择当天素材：右滑精选，左滑废片；按钮可标记必剪、短视频、长片，并导出 CSV 清单。</p>
+      </div>
+      <div class="actions">
+        <a class="button-link" href="./vlog-director.html#picker">回导演手册</a>
+        <a class="button-link" href="./index.html">回行程系统</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><h2>选择当天素材</h2><div class="hint">建议一次只选当天 Dxx 文件夹里的 50-150 条，避免 iPad 浏览器压力太大</div></div>
+        <span class="badge" id="position">0 / 0</span>
+      </div>
+      <div class="body">
+        <div class="loader">
+          <input class="file-input" id="file-input" type="file" accept="image/*,video/*" multiple>
+          <button class="primary" id="export-csv">导出 CSV</button>
+        </div>
+        <div class="stats" id="stats"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="stage">
+        <div class="meta">
+          <span id="tip">右滑精选，左滑废片；不想滑就用下面按钮。</span>
+          <span class="badge" id="current-tag">未标记</span>
+        </div>
+        <div class="viewer" id="viewer">
+          <div class="swipe-label keep" id="keep-label">精选</div>
+          <div class="swipe-label reject" id="reject-label">废片</div>
+          <div class="card-media" id="card-media">
+            <div class="empty">选择当天素材后开始。<br>文件不会上传，所有标签只保存在这个浏览器。</div>
+          </div>
+          <div class="file-name hidden" id="file-name"></div>
+        </div>
+        <div class="controls">
+          <button class="bad" data-tag="废片">左滑 废片</button>
+          <button class="good" data-tag="精选">右滑 精选</button>
+          <button class="primary" data-tag="必剪">必剪</button>
+          <button class="blue" data-tag="短视频">短视频</button>
+          <button data-tag="长片">长片</button>
+          <button id="undo">撤回</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><h2>本次选片记录</h2><div class="hint">导出的 CSV 会把标签映射到素材库文件夹</div></div><button id="clear">清空记录</button></div>
+      <div class="body"><div class="log" id="log"></div></div>
+    </section>
+  </main>
+
+  <script>
+    const input = document.querySelector("#file-input");
+    const viewer = document.querySelector("#viewer");
+    const mediaHost = document.querySelector("#card-media");
+    const fileName = document.querySelector("#file-name");
+    const position = document.querySelector("#position");
+    const currentTag = document.querySelector("#current-tag");
+    const stats = document.querySelector("#stats");
+    const log = document.querySelector("#log");
+    const keepLabel = document.querySelector("#keep-label");
+    const rejectLabel = document.querySelector("#reject-label");
+    const storeKey = "ipad-pianke-swipe-v1";
+    let files = [];
+    let index = 0;
+    let history = [];
+    let tags = JSON.parse(localStorage.getItem(storeKey) || "{}");
+    let drag = { active: false, startX: 0, dx: 0 };
+
+    function key(file) {
+      return `${file.name}_${file.size}_${file.lastModified}`;
+    }
+    function esc(value) {
+      return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+    }
+    function size(value) {
+      if (value > 1024 * 1024 * 1024) return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`;
+      if (value > 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`;
+      return `${(value / 1024).toFixed(1)} KB`;
+    }
+    function save() {
+      localStorage.setItem(storeKey, JSON.stringify(tags));
+    }
+    function currentFile() {
+      return files[index];
+    }
+    function updateStats() {
+      const labels = ["精选", "必剪", "短视频", "长片", "废片"];
+      const active = new Set(files.map(file => key(file)));
+      const counts = Object.entries(tags).filter(([k]) => active.has(k)).reduce((acc, [, tag]) => {
+        acc[tag] = (acc[tag] || 0) + 1;
+        return acc;
+      }, {});
+      stats.innerHTML = labels.map(label => `<div class="stat"><span>${label}</span><b>${counts[label] || 0}</b></div>`).join("");
+      const done = [...active].filter(k => tags[k]).length;
+      position.textContent = `${Math.min(index + 1, files.length || 0)} / ${files.length} · 已标 ${done}`;
+    }
+    function render() {
+      updateStats();
+      const file = currentFile();
+      if (!file) {
+        mediaHost.innerHTML = `<div class="empty">没有更多素材。<br>可以导出 CSV，或重新选择当天素材。</div>`;
+        fileName.classList.add("hidden");
+        currentTag.textContent = "结束";
+        logRender();
+        return;
+      }
+      if (!file.previewUrl) file.previewUrl = URL.createObjectURL(file);
+      const tag = tags[key(file)] || "未标记";
+      currentTag.textContent = tag;
+      fileName.classList.remove("hidden");
+      fileName.textContent = `${file.name} · ${file.type || "未知类型"} · ${size(file.size)}`;
+      const url = esc(file.previewUrl);
+      if (file.type.startsWith("image/")) {
+        mediaHost.innerHTML = `<img src="${url}" alt="">`;
+      } else if (file.type.startsWith("video/")) {
+        mediaHost.innerHTML = `<video src="${url}" controls playsinline preload="metadata"></video>`;
+      } else {
+        mediaHost.innerHTML = `<div class="empty">${esc(file.name)}<br>${esc(file.type || "未知类型")}</div>`;
+      }
+      resetDrag();
+      logRender();
+    }
+    function logRender() {
+      const rows = files.filter(file => tags[key(file)]).map(file => {
+        const tag = tags[key(file)];
+        return `<div class="log-row"><span class="badge">${esc(tag)}</span><strong>${esc(file.name)}</strong></div>`;
+      });
+      log.innerHTML = rows.length ? rows.join("") : `<div class="log-row"><span class="badge">空</span><strong>还没有标记素材</strong></div>`;
+    }
+    function mark(tag, advance = true) {
+      const file = currentFile();
+      if (!file) return;
+      const k = key(file);
+      history.push({ key: k, tag: tags[k] || "", index });
+      tags[k] = tag;
+      save();
+      if (advance) index = Math.min(index + 1, files.length);
+      render();
+    }
+    function undo() {
+      const last = history.pop();
+      if (!last) return;
+      if (last.tag) tags[last.key] = last.tag;
+      else delete tags[last.key];
+      index = last.index;
+      save();
+      render();
+    }
+    function resetDrag() {
+      drag.dx = 0;
+      mediaHost.style.setProperty("--dx", "0px");
+      mediaHost.style.setProperty("--rot", "0deg");
+      keepLabel.style.setProperty("--label-opacity", 0);
+      rejectLabel.style.setProperty("--label-opacity", 0);
+      viewer.classList.remove("dragging");
+    }
+    function applyDrag(dx) {
+      const rot = Math.max(-12, Math.min(12, dx / 18));
+      const opacity = Math.min(1, Math.abs(dx) / 120);
+      mediaHost.style.setProperty("--dx", `${dx}px`);
+      mediaHost.style.setProperty("--rot", `${rot}deg`);
+      keepLabel.style.setProperty("--label-opacity", dx > 0 ? opacity : 0);
+      rejectLabel.style.setProperty("--label-opacity", dx < 0 ? opacity : 0);
+    }
+    viewer.addEventListener("pointerdown", event => {
+      if (!currentFile()) return;
+      drag = { active: true, startX: event.clientX, dx: 0 };
+      viewer.classList.add("dragging");
+      viewer.setPointerCapture(event.pointerId);
+    });
+    function moveDrag(event) {
+      if (!drag.active) return;
+      drag.dx = event.clientX - drag.startX;
+      applyDrag(drag.dx);
+    }
+    function endDrag() {
+      if (!drag.active) return;
+      const dx = drag.dx;
+      drag.active = false;
+      if (dx > 110) mark("精选");
+      else if (dx < -110) mark("废片");
+      else resetDrag();
+    }
+    viewer.addEventListener("pointermove", moveDrag);
+    window.addEventListener("pointermove", moveDrag);
+    viewer.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+    viewer.addEventListener("touchstart", event => {
+      if (!currentFile() || !event.touches.length) return;
+      drag = { active: true, startX: event.touches[0].clientX, dx: 0 };
+      viewer.classList.add("dragging");
+    }, { passive: true });
+    viewer.addEventListener("touchmove", event => {
+      if (!drag.active || !event.touches.length) return;
+      drag.dx = event.touches[0].clientX - drag.startX;
+      applyDrag(drag.dx);
+    }, { passive: true });
+    viewer.addEventListener("touchend", endDrag);
+    viewer.addEventListener("touchcancel", endDrag);
+    document.querySelectorAll("[data-tag]").forEach(button => {
+      button.addEventListener("click", () => mark(button.dataset.tag));
+    });
+    document.querySelector("#undo").addEventListener("click", undo);
+    input.addEventListener("change", event => {
+      files.forEach(file => file.previewUrl && URL.revokeObjectURL(file.previewUrl));
+      files = [...event.target.files];
+      index = 0;
+      history = [];
+      render();
+    });
+    document.querySelector("#clear").addEventListener("click", () => {
+      const active = new Set(files.map(file => key(file)));
+      active.forEach(k => delete tags[k]);
+      history = [];
+      save();
+      render();
+    });
+    document.querySelector("#export-csv").addEventListener("click", () => {
+      const map = { "精选": "S_SELECTS_20", "必剪": "T_TO_EDIT", "短视频": "02_SHORTS", "长片": "03_LONG_FILM", "废片": "Reject_Do_Not_Delete_Yet" };
+      const rows = [["file_name", "size", "type", "tag", "suggest_folder"]];
+      files.forEach(file => {
+        const tag = tags[key(file)] || "";
+        rows.push([file.name, file.size, file.type, tag, map[tag] || "Unsorted"]);
+      });
+      const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ipad_swipe_selects_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+    render();
+  </script>
+</body>
+</html>
