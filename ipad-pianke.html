@@ -285,6 +285,8 @@
     }
     .viewer.dragging { cursor: grabbing; }
     .viewer.fit-cover .card-media img, .viewer.fit-cover .card-media video {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
     }
     .viewer-toolbar {
@@ -318,11 +320,16 @@
       transition: transform .18s ease, opacity .18s ease;
     }
     .card-media img, .card-media video {
-      width: 100%;
-      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
       object-fit: contain;
       display: block;
       border-radius: 8px;
+    }
+    .card-media img {
+      image-orientation: from-image;
     }
     .empty {
       display: grid;
