@@ -201,6 +201,7 @@
       gap: 0;
       grid-template-rows: minmax(0, 1fr);
       background: oklch(0.1 0.018 258);
+      touch-action: none;
     }
     body.preview-fullscreen .meta,
     body.preview-fullscreen .file-name,
@@ -213,6 +214,30 @@
       border: 0;
       border-radius: 0;
       background: oklch(0.1 0.018 258);
+      touch-action: none;
+    }
+    body.preview-fullscreen .viewer::before,
+    body.preview-fullscreen .viewer::after {
+      position: absolute;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      z-index: 3;
+      border: 1px solid oklch(1 0 0 / .2);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: oklch(0.1 0.02 250 / .5);
+      color: oklch(1 0 0 / .78);
+      backdrop-filter: blur(10px);
+      font-size: 12px;
+      font-weight: 850;
+      pointer-events: none;
+    }
+    body.preview-fullscreen .viewer::before {
+      content: "← 左滑废片";
+      left: max(10px, env(safe-area-inset-left));
+    }
+    body.preview-fullscreen .viewer::after {
+      content: "右滑精选 →";
+      right: max(10px, env(safe-area-inset-right));
     }
     body.preview-fullscreen .viewer-toolbar {
       top: max(10px, env(safe-area-inset-top));
@@ -477,7 +502,7 @@
     let index = 0;
     let history = [];
     let tags = JSON.parse(localStorage.getItem(storeKey) || "{}");
-    let drag = { active: false, startX: 0, dx: 0 };
+    let drag = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 };
     let fitMode = "contain";
     let previewFullscreen = false;
 
@@ -622,21 +647,23 @@
     viewer.addEventListener("pointerdown", event => {
       if (event.target.closest("button")) return;
       if (!currentFile()) return;
-      drag = { active: true, startX: event.clientX, dx: 0 };
+      drag = { active: true, startX: event.clientX, startY: event.clientY, dx: 0, dy: 0 };
       viewer.classList.add("dragging");
       viewer.setPointerCapture(event.pointerId);
     });
     function moveDrag(event) {
       if (!drag.active) return;
       drag.dx = event.clientX - drag.startX;
+      drag.dy = event.clientY - drag.startY;
       applyDrag(drag.dx);
     }
     function endDrag() {
       if (!drag.active) return;
       const dx = drag.dx;
+      const threshold = previewFullscreen ? 78 : 110;
       drag.active = false;
-      if (dx > 110) mark("精选");
-      else if (dx < -110) mark("废片");
+      if (dx > threshold) mark("精选");
+      else if (dx < -threshold) mark("废片");
       else resetDrag();
     }
     viewer.addEventListener("pointermove", moveDrag);
@@ -647,14 +674,16 @@
     viewer.addEventListener("touchstart", event => {
       if (event.target.closest("button")) return;
       if (!currentFile() || !event.touches.length) return;
-      drag = { active: true, startX: event.touches[0].clientX, dx: 0 };
+      drag = { active: true, startX: event.touches[0].clientX, startY: event.touches[0].clientY, dx: 0, dy: 0 };
       viewer.classList.add("dragging");
-    }, { passive: true });
+    }, { passive: false });
     viewer.addEventListener("touchmove", event => {
       if (!drag.active || !event.touches.length) return;
+      if (previewFullscreen && event.cancelable) event.preventDefault();
       drag.dx = event.touches[0].clientX - drag.startX;
+      drag.dy = event.touches[0].clientY - drag.startY;
       applyDrag(drag.dx);
-    }, { passive: true });
+    }, { passive: false });
     viewer.addEventListener("touchend", endDrag);
     viewer.addEventListener("touchcancel", endDrag);
     fitToggle.addEventListener("click", event => {
