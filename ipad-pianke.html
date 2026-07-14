@@ -170,6 +170,61 @@
       min-height: 0;
       background: var(--bg);
     }
+    body.preview-fullscreen {
+      overflow: hidden;
+      background: oklch(0.1 0.018 258);
+    }
+    body.preview-fullscreen .app {
+      max-width: none;
+      padding: 0;
+    }
+    body.preview-fullscreen .top,
+    body.preview-fullscreen .panel:first-of-type,
+    body.preview-fullscreen .log-panel {
+      display: none;
+    }
+    body.preview-fullscreen .culling-panel {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: oklch(0.1 0.018 258);
+    }
+    body.preview-fullscreen .stage {
+      width: 100vw;
+      height: 100dvh;
+      min-height: 0;
+      padding: 0;
+      gap: 0;
+      grid-template-rows: minmax(0, 1fr);
+      background: oklch(0.1 0.018 258);
+    }
+    body.preview-fullscreen .meta,
+    body.preview-fullscreen .file-name,
+    body.preview-fullscreen .controls {
+      display: none;
+    }
+    body.preview-fullscreen .viewer {
+      width: 100vw;
+      height: 100dvh;
+      border: 0;
+      border-radius: 0;
+      background: oklch(0.1 0.018 258);
+    }
+    body.preview-fullscreen .viewer-toolbar {
+      top: max(10px, env(safe-area-inset-top));
+      left: max(10px, env(safe-area-inset-left));
+    }
+    body.preview-fullscreen .card-media {
+      padding:
+        max(52px, env(safe-area-inset-top))
+        max(10px, env(safe-area-inset-right))
+        max(10px, env(safe-area-inset-bottom))
+        max(10px, env(safe-area-inset-left));
+    }
     .meta {
       display: flex;
       justify-content: space-between;
@@ -397,7 +452,6 @@
 
   <script>
     const input = document.querySelector("#file-input");
-    const stage = document.querySelector(".stage");
     const viewer = document.querySelector("#viewer");
     const mediaHost = document.querySelector("#card-media");
     const fileName = document.querySelector("#file-name");
@@ -425,6 +479,7 @@
     let tags = JSON.parse(localStorage.getItem(storeKey) || "{}");
     let drag = { active: false, startX: 0, dx: 0 };
     let fitMode = "contain";
+    let previewFullscreen = false;
 
     function key(file) {
       return `${file.name}_${file.size}_${file.lastModified}`;
@@ -545,6 +600,17 @@
       viewer.classList.toggle("fit-cover", fitMode === "cover");
       fitToggle.textContent = fitMode === "cover" ? "完整" : "放大";
     }
+    function setPreviewFullscreen(next) {
+      previewFullscreen = next;
+      document.body.classList.toggle("preview-fullscreen", previewFullscreen);
+      fullscreenToggle.textContent = previewFullscreen ? "退出" : "全屏";
+      if (previewFullscreen) {
+        fitMode = "contain";
+        updateFitMode();
+        window.scrollTo(0, 0);
+        setStatus("已进入预览全屏：默认完整显示竖图、横图和视频；点放大才会裁切看细节。", "good");
+      }
+    }
     function applyDrag(dx) {
       const rot = Math.max(-12, Math.min(12, dx / 18));
       const opacity = Math.min(1, Math.abs(dx) / 120);
@@ -596,31 +662,9 @@
       fitMode = fitMode === "contain" ? "cover" : "contain";
       updateFitMode();
     });
-    fullscreenToggle.addEventListener("click", async event => {
+    fullscreenToggle.addEventListener("click", event => {
       event.stopPropagation();
-      try {
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-          if (document.exitFullscreen) await document.exitFullscreen();
-          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-          fullscreenToggle.textContent = "全屏";
-        } else if (stage.requestFullscreen) {
-          await stage.requestFullscreen();
-          fullscreenToggle.textContent = "退出";
-        } else if (stage.webkitRequestFullscreen) {
-          stage.webkitRequestFullscreen();
-          fullscreenToggle.textContent = "退出";
-        } else {
-          setStatus("当前浏览器不支持网页全屏；照片/视频仍会默认完整显示。");
-        }
-      } catch (error) {
-        setStatus("当前浏览器没有允许网页全屏；照片/视频仍会默认完整显示。");
-      }
-    });
-    document.addEventListener("fullscreenchange", () => {
-      fullscreenToggle.textContent = document.fullscreenElement ? "退出" : "全屏";
-    });
-    document.addEventListener("webkitfullscreenchange", () => {
-      fullscreenToggle.textContent = document.webkitFullscreenElement ? "退出" : "全屏";
+      setPreviewFullscreen(!previewFullscreen);
     });
     document.querySelectorAll("[data-tag]").forEach(button => {
       button.addEventListener("click", () => mark(button.dataset.tag));
