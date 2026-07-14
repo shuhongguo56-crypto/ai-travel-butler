@@ -391,9 +391,11 @@
     .hidden { display: none; }
     @media (max-width: 760px) {
       .app { padding: 10px; }
+      .panel-head { display: grid; grid-template-columns: 1fr; }
       .top, .loader { grid-template-columns: 1fr; }
       .loader > * { width: 100%; }
       .actions { justify-content: flex-start; }
+      .badge { justify-self: start; white-space: normal; }
       .stats { grid-template-columns: 1fr 1fr; }
       .stage { height: calc(100dvh - 18px); min-height: 560px; padding: 10px; }
       .controls { grid-template-columns: 1fr 1fr 1fr; }
@@ -433,9 +435,9 @@
           <input class="folder-input" id="folder-root" value="JapanTrip_Sorted" aria-label="分拣目录名">
           <button class="good" id="write-folder">写入文件夹</button>
           <button class="blue" id="export-zip">分拣ZIP</button>
-          <button class="primary" id="export-csv">导出 CSV</button>
+          <button class="primary" id="export-csv">导出总CSV</button>
         </div>
-        <div class="status" id="status">iPad/微信浏览器通常不能直接移动原文件；可导出分拣 ZIP，解压后就是按标签归类的文件夹。</div>
+        <div class="status" id="status">10GB 素材请分批选择：每批建议 80-200 条；网站会累计总表，不需要一次性塞进浏览器。</div>
         <div class="stats" id="stats"></div>
       </div>
     </section>
@@ -470,7 +472,7 @@
     </section>
 
     <section class="panel log-panel">
-      <div class="panel-head"><div><h2>本次选片记录</h2><div class="hint">导出的 CSV 会把标签映射到素材库文件夹</div></div><button id="clear">清空记录</button></div>
+      <div class="panel-head"><div><h2>累计选片总表</h2><div class="hint">分批选择素材也会持续累计；ZIP/写入文件夹只处理当前批，CSV 会导出全部已标记素材</div></div><div class="actions"><button id="clear">清空当前批</button><button id="clear-catalog">清空总表</button></div></div>
       <div class="body"><div class="log" id="log"></div></div>
     </section>
   </main>
@@ -491,6 +493,7 @@
     const keepLabel = document.querySelector("#keep-label");
     const rejectLabel = document.querySelector("#reject-label");
     const storeKey = "ipad-pianke-swipe-v1";
+    const catalogKey = "ipad-pianke-catalog-v1";
     const folderMap = {
       "精选": "01_SELECTS",
       "必剪": "02_TO_EDIT",
@@ -502,9 +505,11 @@
     let index = 0;
     let history = [];
     let tags = JSON.parse(localStorage.getItem(storeKey) || "{}");
+    let catalog = JSON.parse(localStorage.getItem(catalogKey) || "{}");
     let drag = { active: false, startX: 0, startY: 0, dx: 0, dy: 0 };
     let fitMode = "contain";
     let previewFullscreen = false;
+    let activePreview = { key: "", url: "" };
 
     function key(file) {
       return `${file.name}_${file.size}_${file.lastModified}`;
@@ -532,6 +537,48 @@
         .map(file => ({ file, tag: tags[key(file)] || "" }))
         .filter(item => item.tag);
     }
+    function catalogRows() {
+      return Object.values(catalog).sort((a, b) => (a.updatedAt || "").localeCompare(b.updatedAt || ""));
+    }
+    function rememberCatalog(file, tag) {
+      const k = key(file);
+      const existing = catalog[k];
+      catalog[k] = {
+        key: k,
+        fileName: file.name,
+        sortedName: existing?.sortedName || sortedFileName(file, catalogRows().length),
+        size: file.size,
+        type: file.type || "",
+        tag,
+        suggestFolder: folderForTag(tag),
+        updatedAt: new Date().toISOString()
+      };
+      try {
+        localStorage.setItem(catalogKey, JSON.stringify(catalog));
+      } catch (error) {
+        setStatus("累计总表太大了：请立刻导出总 CSV，清空总表后继续下一批。", "bad");
+      }
+    }
+    function forgetCatalog(fileKey) {
+      delete catalog[fileKey];
+      try {
+        localStorage.setItem(catalogKey, JSON.stringify(catalog));
+      } catch (error) {
+        setStatus("浏览器本地存储已满：请先导出总 CSV，再清空总表继续下一批。", "bad");
+      }
+    }
+    function releasePreview() {
+      if (activePreview.url) URL.revokeObjectURL(activePreview.url);
+      activePreview = { key: "", url: "" };
+    }
+    function previewUrlFor(file) {
+      const k = key(file);
+      if (activePreview.key !== k) {
+        releasePreview();
+        activePreview = { key: k, url: URL.createObjectURL(file) };
+      }
+      return activePreview.url;
+    }
     function setStatus(message, tone = "") {
       status.textContent = message;
       status.style.color = tone === "bad" ? "var(--red)" : tone === "good" ? "var(--green)" : "var(--muted)";
@@ -545,7 +592,14 @@
       setTimeout(() => URL.revokeObjectURL(url), 500);
     }
     function save() {
-      localStorage.setItem(storeKey, JSON.stringify(tags));
+      try {
+        localStorage.setItem(storeKey, JSON.stringify(tags));
+      } catch (error) {
+        setStatus("浏览器本地存储已满：请先导出总 CSV，再清空总表继续下一批。", "bad");
+      }
+    }
+    function batchSize() {
+      return files.reduce((sum, file) => sum + file.size, 0);
     }
     function currentFile() {
       return files[index];
@@ -557,26 +611,30 @@
         acc[tag] = (acc[tag] || 0) + 1;
         return acc;
       }, {});
-      stats.innerHTML = labels.map(label => `<div class="stat"><span>${label}</span><b>${counts[label] || 0}</b></div>`).join("");
+      const totalCounts = catalogRows().reduce((acc, item) => {
+        acc[item.tag] = (acc[item.tag] || 0) + 1;
+        return acc;
+      }, {});
+      stats.innerHTML = labels.map(label => `<div class="stat"><span>${label}</span><b>${counts[label] || 0}</b><small>总 ${totalCounts[label] || 0}</small></div>`).join("");
       const done = [...active].filter(k => tags[k]).length;
-      position.textContent = `${Math.min(index + 1, files.length || 0)} / ${files.length} · 已标 ${done}`;
+      position.textContent = `${Math.min(index + 1, files.length || 0)} / ${files.length} · 本批 ${done} · 总表 ${catalogRows().length}`;
     }
     function render() {
       updateStats();
       const file = currentFile();
       if (!file) {
+        releasePreview();
         mediaHost.innerHTML = `<div class="empty">没有更多素材。<br>可以导出 CSV，或重新选择当天素材。</div>`;
         fileName.classList.add("hidden");
         currentTag.textContent = "结束";
         logRender();
         return;
       }
-      if (!file.previewUrl) file.previewUrl = URL.createObjectURL(file);
       const tag = tags[key(file)] || "未标记";
       currentTag.textContent = tag;
       fileName.classList.remove("hidden");
       fileName.textContent = `${file.name} · ${file.type || "未知类型"} · ${size(file.size)}`;
-      const url = esc(file.previewUrl);
+      const url = esc(previewUrlFor(file));
       if (file.type.startsWith("image/")) {
         mediaHost.innerHTML = `<img src="${url}" alt="">`;
       } else if (file.type.startsWith("video/")) {
@@ -588,18 +646,18 @@
       logRender();
     }
     function logRender() {
-      const rows = files.filter(file => tags[key(file)]).map(file => {
-        const tag = tags[key(file)];
-        return `<div class="log-row"><span class="badge">${esc(tag)}</span><strong>${esc(file.name)}</strong></div>`;
+      const rows = catalogRows().slice(-80).reverse().map(item => {
+        return `<div class="log-row"><span class="badge">${esc(item.tag)}</span><strong>${esc(item.fileName)}</strong></div>`;
       });
-      log.innerHTML = rows.length ? rows.join("") : `<div class="log-row"><span class="badge">空</span><strong>还没有标记素材</strong></div>`;
+      log.innerHTML = rows.length ? rows.join("") : `<div class="log-row"><span class="badge">空</span><strong>还没有累计标签。先选一小批，打完再换下一批。</strong></div>`;
     }
     function mark(tag, advance = true) {
       const file = currentFile();
       if (!file) return;
       const k = key(file);
-      history.push({ key: k, tag: tags[k] || "", index });
+      history.push({ key: k, tag: tags[k] || "", catalogItem: catalog[k] || null, index });
       tags[k] = tag;
+      rememberCatalog(file, tag);
       save();
       if (advance) index = Math.min(index + 1, files.length);
       render();
@@ -609,6 +667,13 @@
       if (!last) return;
       if (last.tag) tags[last.key] = last.tag;
       else delete tags[last.key];
+      if (last.catalogItem) catalog[last.key] = last.catalogItem;
+      else forgetCatalog(last.key);
+      try {
+        localStorage.setItem(catalogKey, JSON.stringify(catalog));
+      } catch (error) {
+        setStatus("浏览器本地存储已满：请先导出总 CSV，再清空总表继续下一批。", "bad");
+      }
       index = last.index;
       save();
       render();
@@ -700,17 +765,35 @@
     });
     document.querySelector("#undo").addEventListener("click", undo);
     input.addEventListener("change", event => {
-      files.forEach(file => file.previewUrl && URL.revokeObjectURL(file.previewUrl));
-      files = [...event.target.files];
+      releasePreview();
+      files = [...event.target.files].sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN", { numeric: true }));
       index = 0;
       history = [];
+      const total = batchSize();
+      if (files.length > 300 || total > 2 * 1024 * 1024 * 1024) {
+        setStatus(`本批 ${files.length} 条，约 ${size(total)}，对 iPad 偏大。建议退回重选 80-200 条；已选也可以继续，但可能卡。`, "bad");
+      } else {
+        setStatus(`已载入本批 ${files.length} 条，约 ${size(total)}。打完后可直接换下一批，总表会继续累计。`, "good");
+      }
       render();
     });
     document.querySelector("#clear").addEventListener("click", () => {
       const active = new Set(files.map(file => key(file)));
-      active.forEach(k => delete tags[k]);
+      active.forEach(k => {
+        delete tags[k];
+        forgetCatalog(k);
+      });
       history = [];
       save();
+      render();
+    });
+    document.querySelector("#clear-catalog").addEventListener("click", () => {
+      catalog = {};
+      tags = {};
+      history = [];
+      save();
+      localStorage.removeItem(catalogKey);
+      setStatus("已清空累计总表。");
       render();
     });
     function sortedFileName(file, order) {
@@ -837,6 +920,10 @@
         return;
       }
       const totalSize = items.reduce((sum, item) => sum + item.file.size, 0);
+      if (totalSize > 1500 * 1024 * 1024) {
+        setStatus(`当前批已标记素材约 ${size(totalSize)}，iPad 网页打 ZIP 容易崩。请导出总 CSV，或把本批拆小到 1GB 内。`, "bad");
+        return;
+      }
       if (totalSize > 0xffffffff) {
         setStatus("本批素材超过 4GB，请分天或分标签导出；iPad 浏览器一次封装太大容易失败。", "bad");
         return;
@@ -869,14 +956,17 @@
     document.querySelector("#export-zip").addEventListener("click", exportSortedZip);
     document.querySelector("#export-csv").addEventListener("click", () => {
       const rows = [["file_name", "sorted_name", "size", "type", "tag", "suggest_folder"]];
-      files.forEach(file => {
-        const tag = tags[key(file)] || "";
-        rows.push([file.name, tag ? sortedFileName(file, rows.length - 1) : "", file.size, file.type, tag, folderForTag(tag)]);
+      catalogRows().forEach(item => {
+        rows.push([item.fileName, item.sortedName, item.size, item.type, item.tag, item.suggestFolder]);
       });
+      if (rows.length === 1) {
+        setStatus("总表还是空的。先分批选择素材并打标签，再导出总 CSV。", "bad");
+        return;
+      }
       const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      downloadBlob(blob, `ipad_swipe_selects_${new Date().toISOString().slice(0, 10)}.csv`);
-      setStatus("已导出 CSV 清单。", "good");
+      downloadBlob(blob, `ipad_total_selects_${new Date().toISOString().slice(0, 10)}.csv`);
+      setStatus(`已导出总 CSV：${rows.length - 1} 条已标记素材。`, "good");
     });
     render();
   </script>
